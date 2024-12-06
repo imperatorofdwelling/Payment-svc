@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/imperatorofdwelling/payment-svc/internal/config"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,9 +13,10 @@ import (
 
 type Server struct {
 	Srv *http.Server
+	Log *zap.SugaredLogger
 }
 
-func NewServer(cfgServer config.Server, handler http.Handler) *Server {
+func NewServer(cfgServer config.Server, handler http.Handler, log *zap.SugaredLogger) *Server {
 	addr := fmt.Sprintf("%s:%d", cfgServer.Host, cfgServer.Port)
 
 	srv := &http.Server{
@@ -24,15 +25,17 @@ func NewServer(cfgServer config.Server, handler http.Handler) *Server {
 	}
 
 	return &Server{
-		srv,
+		Srv: srv,
+		Log: log,
 	}
 }
 
 func (s *Server) Start() error {
-	log.Printf("http server listening at %s", s.Srv.Addr)
+	s.Log.Infof("http server listening at %s", s.Srv.Addr)
+
 	go func() {
 		if err := s.Srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatal("error starting http server:", err)
+			s.Log.Fatal("error starting http server:", err)
 		}
 	}()
 
@@ -45,5 +48,5 @@ func (s *Server) Stop() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sign := <-quit
 
-	log.Printf("server successfully stopped received signal %s", sign.String())
+	s.Log.Infof("server successfully stopped received signal %s", sign.String())
 }

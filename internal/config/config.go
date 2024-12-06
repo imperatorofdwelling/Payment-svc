@@ -82,9 +82,9 @@ func loadFlags() (flagsOption, error) {
 	flag.Var(&currEnv, "env", "Environment type")
 	flag.Parse()
 
-	flagOption := flagsOption{
+	fOption := flagsOption{
 		Env: currEnv,
 	}
 
-	return flagOption, nil
+	return fOption, nil
 }
