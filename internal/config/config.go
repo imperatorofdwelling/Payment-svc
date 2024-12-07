@@ -29,10 +29,11 @@ type Db struct {
 }
 
 type Postgres struct {
+	Host     string `yaml:"host" env-default:"localhost" env-required:"true"`
 	Username string `yaml:"username" env-required:"true"`
 	Password string `yaml:"password" env-required:"true"`
 	DbName   string `yaml:"db_name" env-required:"true"`
-	Port     int    `yaml:"port" env-required:"true"`
+	Port     int    `yaml:"port" env-default:"5432" env-required:"true"`
 	SSLMode  string `yaml:"ssl_mode"`
 }
 

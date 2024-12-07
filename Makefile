@@ -16,6 +16,7 @@ docker-prod: yml-convert-prod
 ### YML config convert to .env (for docker compose usage) ###
 create-env:
 	@go build -o bin/ymlConverter ./cmd/ymlConverter/main.go
+
 yml-convert-local: create-env
 	@./bin/ymlConverter -env local
 yml-convert-dev: create-env

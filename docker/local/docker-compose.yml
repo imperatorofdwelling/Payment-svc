@@ -1,19 +1,19 @@
-volumes:
-  iod_payment_postgres_data:
+#volumes:
+#  iod_payment_postgres_data:
 
 services:
   db:
     container_name: db-payment
     image: postgres:17
     restart: always
-    expose:
-      - "5534:5432"
+    ports:
+      - ${POSTGRES_PORT}:5432
     environment:
       POSTGRES_USER: $POSTGRES_USERNAME
       POSTGRES_PASSWORD: $POSTGRES_PASSWORD
       POSTGRES_DB: $POSTGRES_DB_NAME
-    volumes:
-      - iod_payment_postgres_data:/var/lib/postgresql/data
+#    volumes:
+#      - iod_payment_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $POSTGRES_USERNAME -d $POSTGRES_DB_NAME" ]
       interval: 10s
