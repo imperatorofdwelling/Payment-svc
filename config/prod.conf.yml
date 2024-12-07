@@ -13,4 +13,7 @@ db:
     port: 5534
     ssl_mode: "disable"
   redis:
-    password: "redis_pass"
+    host: "localhost"
+    port: 6379
+    password: "12345678"
+    protocol: 3

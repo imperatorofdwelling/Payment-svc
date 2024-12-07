@@ -38,7 +38,10 @@ type Postgres struct {
 }
 
 type Redis struct {
-	Password string `yaml:"password" env-required:"true"`
+	Host     string `yaml:"host" env-default:"localhost" env-required:"true"`
+	Port     int    `yaml:"port" env-required:"true"`
+	Password string `yaml:"password" env-default:"12345678" env-required:"true"`
+	Protocol int    `yaml:"protocol"`
 }
 
 type flagsOption struct {

@@ -4,14 +4,15 @@ import (
 	"database/sql"
 	"github.com/imperatorofdwelling/payment-svc/internal/config"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
+	"github.com/imperatorofdwelling/payment-svc/internal/storage/redis"
 	"github.com/imperatorofdwelling/payment-svc/pkg"
-	"github.com/redis/go-redis/v9"
+	r "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
 type Storage struct {
 	Psql  *sql.DB
-	Redis *redis.Client
+	Redis *r.Client
 }
 
 func GetStorages(cfg *config.Config, log *zap.SugaredLogger) *Storage {
@@ -25,7 +26,17 @@ func GetStorages(cfg *config.Config, log *zap.SugaredLogger) *Storage {
 
 	}
 
+	redisClient, err := redis.NewRedisClient(cfg.Redis)
+	if err != nil {
+		log.Fatalf("Failed to connect to redis: %v", err)
+	}
+
+	if cfg.Env != pkg.ProdEnv {
+		log.Infof("successfully connected to redis with %s:%d", cfg.Redis.Host, cfg.Redis.Port)
+	}
+
 	return &Storage{
-		Psql: psqlStorage,
+		Psql:  psqlStorage,
+		Redis: redisClient,
 	}
 }

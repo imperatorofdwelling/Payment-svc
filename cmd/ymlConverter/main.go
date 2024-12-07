@@ -40,8 +40,6 @@ const (
 func main() {
 	currEnv := loadEnvFlag()
 
-	fmt.Println("Hello world")
-
 	configPath, err := filepath.Abs(fmt.Sprintf("./config/%s.conf.yml", currEnv))
 	if err != nil {
 		panic("can't get absolute path for config file")
