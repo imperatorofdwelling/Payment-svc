@@ -6,7 +6,8 @@ import (
 	v1 "github.com/imperatorofdwelling/payment-svc/internal/handler/http/api/v1"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage"
-	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres/repo"
+	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
+	"github.com/imperatorofdwelling/payment-svc/internal/storage/redis"
 	"go.uber.org/zap"
 	"time"
 )
@@ -26,9 +27,15 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger) *Router {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/api/v1", func(r chi.Router) {
-		paymentRepo := repo.NewPaymentRepo(s.Psql, log.Named("payment_repo"))
+		paymentRepo := postgres.NewPaymentRepo(s.Psql, log.Named("payment_repo"))
 		paymentSvc := service.NewPaymentSvc(paymentRepo, log.Named("payment_service"))
 		v1.NewPaymentHandler(r, paymentSvc, log.Named("payment_handler"))
+
+		_ = postgres.NewLogsRepo(s.Psql)
+
+		_ = postgres.NewCardRepo(s.Psql)
+
+		_ = redis.NewTransactionRepo(s.Redis)
 	})
 
 	return &Router{
