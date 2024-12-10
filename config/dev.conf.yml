@@ -17,3 +17,7 @@ db:
     port: 6379
     password: "12345678"
     protocol: 3
+pay_api:
+  shop_id: 994351
+  secret_key: "test_MheegEXjJUlromDARVVTdiZrsGAB_8YBbgv17erGQ0A"
+  addr: "https://api.yookassa.ru/v3"

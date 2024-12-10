@@ -8,7 +8,7 @@ import (
 
 type User struct {
 	ID        uuid.UUID `json:"id"`
-	Balance   float32   `json:"balance"`
+	Balance   float64   `json:"balance"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

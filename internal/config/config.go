@@ -13,7 +13,14 @@ import (
 type Config struct {
 	Env    pkg.Env `yaml:"env" env-default:"local" env-required:"true"`
 	Server `yaml:"server" env-required:"true"`
-	Db
+	Db     `yaml:"db" env-required:"true"`
+	PayApi `yaml:"pay_api"`
+}
+
+type PayApi struct {
+	ShopID    int    `yaml:"shop_id" env-required:"true"`
+	SecretKey string `yaml:"secret_key" env-required:"true"`
+	Addr      string `yaml:"addr" env-required:"true"`
 }
 
 type Server struct {
