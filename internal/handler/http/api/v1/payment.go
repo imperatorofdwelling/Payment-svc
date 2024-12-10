@@ -38,11 +38,9 @@ func (h *paymentHandler) getTest(w http.ResponseWriter, r *http.Request) {
 
 	//v := h.svc.GetSTest()
 
-	tt := &model.PaymentMethodData{
-		Type:  model.MobileBalanceType,
-		Phone: "+79189999999",
+	tt := &model.Confirmation{
+		Type: model.Redirect,
 	}
-
 	if err := v10.Validate.Struct(tt); err != nil {
 		validationErr := err.(validator.ValidationErrors)
 		json.WriteError(w, http.StatusBadRequest, validationErr.Error(), json.ValidationError)

@@ -5,7 +5,7 @@ type (
 	//
 	// Amount: payment amount. Sometimes YouKassa partners charge an extra commission, which is not included in this amount.
 	//
-	// Capture: ???
+	// Capture: Automatic acceptance of the received payment. Possible values: true — the payment is debited immediately (payment in one stage); false — the payment is held and debited upon your request (payment in two stages ).
 	//
 	// PaymentMethodData: data for payment by a specific method (payment_method). You don't have to pass this object in the request. In this case, the user will choose the payment method on the YUKASSA side.
 	//
@@ -36,11 +36,12 @@ type (
 	//
 	// ElectronicCertificate: data from the FES NSPK for payment by electronic certificate. It is necessary to transfer only when paying with data collection on your side.
 	PaymentMethodData struct {
-		Type                  PaymentMethodType `json:"type" validate:"required"`
-		Phone                 string            `json:"phone,omitempty" validate:"omitempty,e164,required_if=Type:mobile_balance"`
-		BankCard              `json:"card,omitempty" validate:"omitempty,required_if=Type:bank_card"`
-		PaymentPurpose        string `json:"payment_purpose,omitempty" validate:"omitempty,max=210,required_if=Type:b2b_sberbank"`
-		VatData               `json:"vat_data" validate:"omitempty,required_if=Type:b2b_sberbank"`
+		Type           PaymentMethodType `json:"type" validate:"required,should_exist_field=mobile_balance Phone b2b_sberbank PaymentPurpose b2b_sberbank VatData"`
+		Phone          string            `json:"phone,omitempty" validate:"omitempty,e164,required_if=Type mobile_balance"`
+		BankCard       `json:"card,omitempty" validate:"omitempty"`
+		PaymentPurpose string `json:"payment_purpose,omitempty" validate:"omitempty,max=210,required_if=Type b2b_sberbank"`
+		VatData        `json:"vat_data" validate:"omitempty,required_if=Type b2b_sberbank"`
+		// TODO Create Articles struct
 		Articles              []any `json:"articles" validate:"omitempty"`
 		ElectronicCertificate `json:"electronic_certificate,omitempty" validate:"omitempty"`
 	}
@@ -94,8 +95,8 @@ type (
 	//
 	// Enforce: Request to make a payment with 3-D Secure authentication. It will work if you accept payment by bank card by default without confirmation of payment by the user. In all other cases, the 3-D Secure authentication will be managed by UCassa. If you want to accept payments without additional confirmation by the user, write to your UCassa manager.
 	Confirmation struct {
-		Type      ConfirmationType `json:"type" validate:"required"`
-		ReturnURL string           `json:"return_url,omitempty" validate:"omitempty,url,required_if=Type:redirect|mobile_application"`
+		Type      ConfirmationType `json:"type" validate:"required,should_exist_field=redirect ReturnURL mobile_application ReturnURL"`
+		ReturnURL string           `json:"return_url,omitempty" validate:"omitempty,url,required_if=Type redirect Type mobile_application"`
 		Locale    string           `json:"locale,omitempty" validate:"omitempty,oneof=ru_RU en_US"`
 		Enforce   bool             `json:"enforce,omitempty" validate:"omitempty"`
 	}
@@ -107,7 +108,7 @@ type (
 	// Rate: The tax rate (as a percentage). Possible values are 7, 10, 18 and 20.
 	VatData struct {
 		Type   string `json:"type" validate:"required,vat"`
-		Amount `json:"amount" validate:"omitempty,required_if=Type:calculated|mixed"`
+		Amount `json:"amount" validate:"omitempty,required_if=Type calculated Type mixed"`
 		Rate   string `json:"rate" validate:"omitempty,numeric,required_if=Type:calculated"`
 	}
 )
@@ -124,8 +125,8 @@ type ConfirmationType string
 
 var (
 	Embedded          ConfirmationType = "embedded"
-	external          ConfirmationType = "external"
-	mobileApplication ConfirmationType = "mobile_application"
+	External          ConfirmationType = "external"
+	MobileApplication ConfirmationType = "mobile_application"
 	QR                ConfirmationType = "qr"
 	Redirect          ConfirmationType = "redirect"
 )

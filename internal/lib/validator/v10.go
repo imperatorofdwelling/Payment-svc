@@ -16,8 +16,7 @@ func NewValidator(log *zap.SugaredLogger) {
 
 	registerValidation("money", moneyValidator, log, newValidate)
 	registerValidation("currency", currencyValidator, log, newValidate)
-	registerValidation("required_if", requiredIfAnotherFieldContainsValidator, log, newValidate)
-	//registerValidation("e164", e164Validator, log, newValidate)
+	registerValidation("should_exist_field", shouldExistFieldsValidator, log, newValidate)
 
 	Validate = newValidate
 }
@@ -69,28 +68,7 @@ func currencyValidator(log *zap.SugaredLogger) validator.Func {
 	}
 }
 
-//func e164Validator(log *zap.SugaredLogger) validator.Func {
-//	return func(fl validator.FieldLevel) bool {
-//		v := fl.Field()
-//
-//		if v.Kind() != reflect.String {
-//			log.Errorf("value %v is not a string", v)
-//			return false
-//		}
-//
-//		e164Regex := `^\+[1-9]\d{1,14}$`
-//
-//		reg := regexp.MustCompile(e164Regex)
-//		if !reg.MatchString(v.String()) {
-//			log.Errorf("value %v is not a valid e164", v)
-//			return false
-//		}
-//
-//		return true
-//	}
-//}
-
-func requiredIfAnotherFieldContainsValidator(log *zap.SugaredLogger) validator.Func {
+func shouldExistFieldsValidator(log *zap.SugaredLogger) validator.Func {
 	return func(fl validator.FieldLevel) bool {
 		v := fl.Field()
 
@@ -100,44 +78,29 @@ func requiredIfAnotherFieldContainsValidator(log *zap.SugaredLogger) validator.F
 		}
 
 		param := fl.Param()
+		words := strings.Fields(param)
 
-		paramSplit := strings.Split(param, ":")
-		if len(paramSplit) != 2 {
-			log.Errorf("value %v has incorect format", v)
-			return false
+		result := make(map[string]string)
+
+		for i := 0; i < len(words)-1; i += 2 {
+			key := words[i]
+			value := words[i+1]
+			result[key] = value
 		}
 
-		key := paramSplit[0]
-		value := paramSplit[1]
+		parent := fl.Parent()
 
-		comparedFiledValue := fl.Parent().FieldByName(key).String()
-		if comparedFiledValue == "" {
-			log.Errorf("value %v has not compared", v)
-			return false
-		}
+		for fieldKey, fieldNameValue := range result {
+			shouldExistValue := parent.FieldByName(fieldNameValue)
 
-		if strings.Contains(value, "|") {
-			splitValue := strings.Split(value, "|")
-
-			isEqual := false
-
-			for _, val := range splitValue {
-				if val == comparedFiledValue {
-					isEqual = true
-				}
+			if fieldKey != v.String() {
+				continue
 			}
+			//log.Debugf("AAAAAAAAAAAAAAAAAAAA %s", fieldKey)
 
-			if !isEqual {
-				log.Errorf("value %v is not a valid field", v)
+			if shouldExistValue.IsZero() || shouldExistValue.String() == "" {
 				return false
 			}
-
-			return true
-		}
-
-		if comparedFiledValue != value && v.String() != "" {
-			log.Errorf("value %v is not a valid field, it should be %s", v, value)
-			return false
 		}
 
 		return true
