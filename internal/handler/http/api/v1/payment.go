@@ -3,6 +3,7 @@ package v1
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	v10 "github.com/imperatorofdwelling/payment-svc/internal/lib/validator"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"github.com/imperatorofdwelling/payment-svc/pkg/json"
@@ -14,8 +15,6 @@ type paymentHandler struct {
 	svc service.IPaymentSvc
 	log *zap.SugaredLogger
 }
-
-var errs error
 
 type TestStruct struct {
 	Value string `json:"value" validate:"required,currency"`
@@ -39,8 +38,9 @@ func (h *paymentHandler) getTest(w http.ResponseWriter, r *http.Request) {
 
 	//v := h.svc.GetSTest()
 
-	tt := &TestStruct{
-		Value: "13f.92",
+	tt := &model.PaymentMethodData{
+		Type:  model.MobileBalanceType,
+		Phone: "+79189999999",
 	}
 
 	if err := v10.Validate.Struct(tt); err != nil {
