@@ -14,12 +14,268 @@ type (
 	// Confirmation: The data required to initiate the selected payment confirmation scenario by the user.
 	//
 	// Description: The description of the transaction (no more than 128 characters), which you will see in the personal account of the user, and the user — when paying. For example: "Payment for order No. 72 for user@yoomoney.ru ".
+	//
+	// Receipt: Data for the formation of the receipt. It is necessary to transmit in these cases: you are a company or sole proprietor and you use Checks from YUKASSA to pay in compliance with the requirements of Federal Law No. 54; you are a company or sole proprietor, for payment in compliance with the requirements of Federal Law No. 54, you use a third-party online sales register and send data for receipts according to one of the scenarios: Payment and receipt at the same time, or First the receipt, then the payment ; you are self-employed and use the UCassa solution for auto-sending checks.
+	//
+	// Recipient: Payment recipient. Required for separating payment flows within one account or making payments to other accounts.
+	//
+	// PaymentToken: One-time payment token generated with Checkout.js or mobile SDK .
+	//
+	// PaymentMethodID: Saved payment method 's ID.
+	//
+	// SavePaymentMethod: Saving payment data for making autopayments. Possible values: true — save the payment method (save the payment data); false — make a payment without saving the payment method. Available only after consultation with the Kassa manager.
+	//
+	// ClientIP: User’s IPv4 or IPv6 address. If not specified, the TCP connection’s IP address is used.
+	//
+	// Metadata: Any additional data you might require for processing payments (for example, your internal order ID), specified as a “key-value” pair and returned in response from YooMoney. Limitations: no more than 16 keys, no more than 32 characters in the key’s title, no more than 512 characters in the key’s value, data type is a string in the UTF-8 format.
+	//
+	// Airline: Object containing the data for selling airline tickets. Used only for bank card payments.
+	//
+	// Transfers: Information about money distribution: the amounts of transfers and the stores to be transferred to. Specified if you use Split payments .
+	//
+	// Deal: The deal within which the payment is being carried out. Specified if you use Safe deal .
+	//
+	// MerchantCustomerID: The identifier of the customer in your system, such as email address or phone number. No more than 200 characters. Specified if you want to save a bank card and offer it for a recurring payment in the YooMoney payment widget .
+	//
+	// Receiver: Payment receiver's details specified when you want to add money to e-wallet, bank account, or phone balance .
 	PaymentReq struct {
+		Amount             `json:"amount" validate:"required"`
+		Capture            bool `json:"capture,omitempty"`
+		PaymentMethodData  `json:"payment_method_data,omitempty" validate:"omitempty"`
+		Confirmation       `json:"confirmation,omitempty" validate:"omitempty"`
+		Description        string `json:"description,omitempty" validate:"omitempty,max=128"`
+		Receipt            `json:"receipt,omitempty" validate:"omitempty"`
+		Recipient          `json:"recipient,omitempty" validate:"omitempty"`
+		PaymentToken       string `json:"payment_token,omitempty"`
+		PaymentMethodID    string `json:"payment_method_id,omitempty" validate:"omitempty,uuid"`
+		SavePaymentMethod  bool   `json:"save_payment_method,omitempty"`
+		ClientIP           string `json:"client_ip,omitempty" validate:"omitempty,ip4_addr|ip6_addr"`
+		Metadata           any    `json:"metadata,omitempty" validate:"omitempty"`
+		Airline            `json:"airline,omitempty" validate:"omitempty"`
+		Transfers          `json:"transfers,omitempty" validate:"omitempty"`
+		Deal               `json:"deal,omitempty" validate:"omitempty"`
+		MerchantCustomerID string `json:"merchant_customer_id,omitempty" validate:"omitempty,max=200"`
+		Receiver           `json:"receiver,omitempty" validate:"omitempty"`
+	}
+
+	// Receipt specifies data for the formation of the receipt. It is necessary to transmit in these cases: you are a company or sole proprietor and you use Checks from YUKASSA to pay in compliance with the requirements of Federal Law No. 54; you are a company or sole proprietor, for payment in compliance with the requirements of Federal Law No. 54, you use a third-party online sales register and send data for receipts according to one of the scenarios: Payment and receipt at the same time, or First the receipt, then the payment ; you are self-employed and use the UCassa solution for auto-sending checks.
+	//
+	// Customer: User details. You should specify at least the basic contact information: email address (customer.email) or phone number (customer.phone).
+	//
+	// Items: List of products in an order. Receipts sent in accordance with 54-FZ can contain up to 100 items. Receipts for the self-employed can contain up to six items.
+	//
+	// TaxSystemCode: Store's tax system (tag 1055 in 54-FZ). The parameter is required if you use the ATOL online sales register updated to FFD 1.2, or if you use several tax systems. Otherwise, the parameter is not specified.
+	//
+	// ReceiptIndustryDetails: Industry attribute of the receipt (tag 1261 in 54-FZ). Must be specified if FFD 1.2 is used.
+	//
+	// ReceiptOperationalDetails: Transaction attribute of the receipt (tag 1270 in 54-FZ). Must be specified if FFD 1.2 is used.
+	Receipt struct {
+		Customer                  `json:"customer,omitempty" validate:"omitempty"`
+		Items                     []ReceiptItem           `json:"items" validate:"required"`
+		TaxSystemCode             int                     `json:"tax_system_code,omitempty" validate:"omitempty,gte=1,lte=6"`
+		ReceiptIndustryDetails    []ReceiptIndustryDetail `json:"receipt_industry_details,omitempty" validate:"omitempty"`
+		ReceiptOperationalDetails `json:"receipt_operational_details,omitempty" validate:"omitempty"`
+	}
+
+	// ReceiptItem specifies list of products in an order. Receipts sent in accordance with 54-FZ can contain up to 100 items. Receipts for the self-employed can contain up to six items.
+	//
+	// Description: Product name (maximum 128 characters). Tag 1030 in 54-FZ.
+	//
+	// VatCode: VAT rate (tag 1199 in 54-FZ). In receipts sent in accordance with 54-FZ, possible value is a number from 1 to 6.
+	//
+	// Quantity: Product quantity (tag 1023 in 54-FZ). In receipts sent in accordance with 54-FZ, the maximum possible value depends on the model of your online sales register. Receipts for the self-employed can only specify positive integers (without separator and fractional part). Example: 1.
+	//
+	// Measure: Unit of measurement of product quantity: for example, items or grams. Tag 2108 in 54-FZ. This parameter must be specified starting from FFD 1.2. List of possible measures: https://yookassa.ru/developers/payment-acceptance/receipts/54fz/other-services/parameters-values#measure
+	//
+	// MarkQuantity: Fraction of a marked product (tag 1291 in 54-FZ). Must be specified if all of the following applies: FFD version 1.2 is used; payment is made for a marked product; the measure field has the piece value. Example: you're selling pencils by the piece. They're supplied in packages 100 pencils each with one marking code. To sell one pencil, enter 1 in numerator and 100 in denominator.
+	//
+	// PaymentSubject: Payment subject attribute (tag 1212 in 54-FZ): what the payment is made for, for example, a product or service. List of possible subjects: https://yookassa.ru/developers/payment-acceptance/receipts/54fz/other-services/parameters-values#payment-subject
+	//
+	// PaymentMode: Payment method attribute (tag 1214 in 54-FZ): contains information about the payment method and shows whether the product has been handed over to the customer. Example: a customer makes a full payment for a product and immediately receives it. In this case, the full_payment (full payment) value must be specified. List of possible values: https://yookassa.ru/developers/payment-acceptance/receipts/54fz/other-services/parameters-values#payment-mode.
+	//
+	// CountryOfOriginCode: Country of origin code according to the Russian classifier of world countries (OK (MK (ISO 3166) 004-97) 025-2001). Tag 1230 in 54-FZ. Example: RU. Online sales register that support this parameter: Orange Data, Kit Invest.
+	//
+	// CustomsDeclarationNumber: Customs declaration number (1 to 32 characters). Tag 1231 in 54-FZ. Online sales register that support this parameter: Orange Data, Kit Invest.
+	//
+	// Excise: Amount of excise tax on products including kopeks. Tag 1229 in 54-FZ. Decimal number with 2 digits after the period. Online sales register that support this parameter: Orange Data, Kit Invest. Example:20.00.
+	//
+	// ProductCode: Product code is a unique number assigned to a unit of product during marking process. Tag 1162 in 54-FZ. Format: hexadecimal number with spaces. Maximum length is 32 bytes. Example: 00 00 00 01 00 21 FA 41 00 23 05 41 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 12 00 AB 00. Required parameter for marked products.
+	//
+	// MarkCodeInfo: Product code (tag 1163 in 54-FZ). Must be specified if the FFD 1.2 protocol is used and if the product must be marked. At least one of the fields must be filled in.
+	//
+	// MarkMode: Method of processing the marking code (tag 2102 in 54-FZ). Must be specified if all of the following applies: FFD version 1.2 is used; payment is made for a marked product; an online sales register from ATOL Online or BusinessRu is used. Must get a value equal to "0". Pattern:^[0]{1}$
+	//
+	// PaymentSubjectIndustryDetails: Industry attribute of the payment subject (tag 1260 in 54-FZ). Must be specified if FFD 1.2 is used.
+	ReceiptItem struct {
+		Description              string `json:"description" validate:"required,max=128"`
+		Amount                   `json:"amount" validate:"required"`
+		VatCode                  string `json:"vat_code" validate:"required,gte=1,lte=6"`
+		Quantity                 int    `json:"quantity" validate:"required,number"`
+		Measure                  string `json:"measure,omitempty" validate:"omitempty"`
+		MarkQuantity             `json:"mark_quantity,omitempty" validate:"omitempty"`
+		PaymentSubject           string `json:"payment_subject,omitempty" validate:"omitempty"`
+		PaymentMode              string `json:"payment_mode,omitempty" validate:"omitempty"`
+		CountryOfOriginCode      string `json:"country_of_origin_code,omitempty" validate:"omitempty"`
+		CustomsDeclarationNumber string `json:"customs_declaration_number,omitempty" validate:"omitempty,min=1,max=32"`
+		Excise                   string `json:"excise,omitempty" validate:"omitempty"`
+		ProductCode              string `json:"product_code,omitempty" validate:"omitempty,len=2"`
+		// TODO create MarcCodeInfo struct
+		MarkCodeInfo                  any                   `json:"mark_code_info,omitempty" validate:"omitempty"`
+		MarkMode                      string                `json:"mark_mode,omitempty" validate:"omitempty"`
+		PaymentSubjectIndustryDetails ReceiptIndustryDetail `json:"payment_subject_industry_details,omitempty" validate:"omitempty"`
+	}
+
+	// MarkQuantity specifies fraction of a marked product (tag 1291 in 54-FZ). Must be specified if all of the following applies: FFD version 1.2 is used; payment is made for a marked product; the measure field has the piece value. Example: you're selling pencils by the piece. They're supplied in packages 100 pencils each with one marking code. To sell one pencil, enter 1 in numerator and 100 in denominator.
+	//
+	// Numerator: The number of products sold from one customer package (tag 1293 in 54-FZ). Cannot exceed the denominator.
+	//
+	// Denominator: The total number of products in the customer package (tag 1294 in 54-FZ).
+	MarkQuantity struct {
+		Numerator   int `json:"numerator" validate:"required,gte=1"`
+		Denominator int `json:"denominator" validate:"required,gte=1"`
+	}
+
+	// ReceiptIndustryDetail specifies industry attribute of the receipt (tag 1261 in 54-FZ). Must be specified if FFD 1.2 is used.
+	//
+	// FederalID: ID of the federal executive authority (tag 1262 in 54-FZ). Pattern:(^00[1-9]{1}$)|(^0[1-6]{1}[0-9]{1}$)|(^07[0-3]{1}$)
+	//
+	// DocumentDate: Date of the incorporation document. Tag 1263 in 54-FZ. Specified in the ISO 8601 format.
+	//
+	// DocumentNumber: Number of the regulation issued by the federal executive authority prescribing how the "Industry attribute value" attribute must be filled in. Tag 1264 in 54-FZ.
+	//
+	// Value: Industry attribute value (tag 1265 in 54-FZ). Example:123/43
+	ReceiptIndustryDetail struct {
+		FederalID      string `json:"federal_id" validate:"required"`
+		DocumentDate   string `json:"document_date" validate:"required,datetime"`
+		DocumentNumber string `json:"document_number" validate:"required,max=32"`
+		Value          string `json:"value" validate:"required,max=256"`
+	}
+
+	// Customer specifies user details. You should specify at least the basic contact information: email address (customer.email) or phone number (customer.phone).
+	//
+	// FullName: Name of the organization for companies, full name for sole proprietors and individuals. If the individual doesn't have a Tax Identification Number (INN), specify their passport information in this parameter. Maximum 256 characters. Online sales register that support this parameter: Orange Data, ATOL Online.
+	//
+	// INN: User's Tax Identification Number (INN) (10 or 12 digits). If the individual doesn't have an INN, specify their passport information in the full_name parameter. Online sales register that support this parameter: Orange Data, ATOL Online.
+	//
+	// Email: User's email address for sending the receipt. Required parameter if phone isn't specified.
+	//
+	// Phone: User's phone number for sending the receipt. Specified in the ITU-T E.164 format, for example, 79000000000. Required parameter if email isn't specified.
+	Customer struct {
+		FullName string `json:"full_name,omitempty" validate:"omitempty,max=256"`
+		INN      string `json:"inn,omitempty" validate:"omitempty,numeric,len=10|len=12"`
+		Email    string `json:"email,omitempty" validate:"omitempty,email"`
+		// TODO check phone format e164 with + before numbers
+		Phone string `json:"phone,omitempty" validate:"omitempty,e164"`
+	}
+
+	// ReceiptOperationalDetails specifies transaction attribute of the receipt (tag 1270 in 54-FZ). Must be specified if FFD 1.2 is used.
+	//
+	// OperationID: Transaction ID (tag 1271 in 54-FZ). From 0 to 255 characters.
+	//
+	// Value: Transaction details (tag 1272 in 54-FZ).
+	//
+	// CreatedAt: Time when the transaction was initiated (tag 1273 in 54-FZ). Formatted in accordance with UTC standart and specified in the ISO 8601. Example: 2017-11-03T11:52:31.827Z
+	ReceiptOperationalDetails struct {
+		OperationID int       `json:"operation_id" validate:"required,gte=0,lte=255"`
+		Value       string    `json:"value" validate:"required,max=64"`
+		CreatedAt   time.Time `json:"created_at" validate:"required"`
+	}
+
+	// Receiver specifies payment receiver's details specified when you want to add money to e-wallet, bank account, or phone balance .
+	//
+	// Type: Value: mobile_balance. Payment receiver code.
+	//
+	// AccountNumber: Bank account number. Format: 20 characters.
+	//
+	// BIC: Bank Identification Code (BIC) of the bank where the account is created. Format: 9 characters.
+	//
+	// Phone: Phone number where money should be added. Maximum 15 characters. Specified in the format ITU-T E.164. Example: 79000000000.
+	Receiver struct {
+		Type          string `json:"type" validate:"required,oneof=bank_account digital_wallet mobile_balance"`
+		AccountNumber string `json:"account_number,omitempty" validate:"required_if=Type bank_account|required_if=Type digital_wallet"`
+		BIC           string `json:"bic,omitempty" validate:"required_if=Type bank_account"`
+		Phone         string `json:"phone,omitempty" validate:"required_if=Type mobile_balance"`
+	}
+
+	// Deal specifies the deal within which the payment is being carried out. Specified if you use Safe deal .
+	//
+	// ID: Deal ID.
+	//
+	// Settlements: Information about money distribution.
+	Deal struct {
+		ID          string           `json:"id" validate:"required,uuid"`
+		Settlements []DealSettlement `json:"settlements" validate:"required"`
+	}
+
+	// DealSettlement specifies information about money distribution.
+	//
+	// Type: Transaction type. Fixed value: payout — payout to seller.
+	//
+	// Amount: Amount of seller’s remuneration.
+	DealSettlement struct {
+		Type   string `json:"type" validate:"required"`
+		Amount `json:"amount" validate:"required"`
+	}
+
+	// Transfers specifies information about money distribution: the amounts of transfers and the stores to be transferred to. Specified if you use Split payments .
+	//
+	// AccountID: ID of the store in favor of which you're accepting the receipt. Provided by YooMoney, displayed in the Sellers section of your Merchant Profile (shopId column).
+	//
+	// Amount: Amount to be transferred to the store.
+	//
+	// PlatformFeeAmount: Commission for sold products or services charged in your favor.
+	//
+	// Description: Transaction description (up to 128 characters), which the seller will see in the YooMoney Merchant Profile. Example: "Marketplace order No. 72".
+	//
+	// Metadata: Any additional data you might require for processing payments (for example, your internal order ID), specified as a “key-value” pair and returned in response from YooMoney. Limitations: no more than 16 keys, no more than 32 characters in the key’s title, no more than 512 characters in the key’s value, data type is a string in the UTF-8 format.
+	Transfers struct {
+		AccountID         string `json:"account_id" validate:"required"`
 		Amount            `json:"amount" validate:"required"`
-		Capture           bool `json:"capture,omitempty"`
-		PaymentMethodData `json:"payment_method_data,omitempty" validate:"omitempty"`
-		Confirmation      `json:"confirmation,omitempty" validate:"omitempty"`
-		Description       string `json:"description,omitempty" validate:"omitempty,lte=128"`
+		PlatformFeeAmount Amount `json:"platform_fee_amount,omitempty" validate:"omitempty"`
+		Description       string `json:"description,omitempty" validate:"omitempty,max=128"`
+		Metadata          any    `json:"metadata,omitempty" validate:"omitempty"`
+	}
+
+	// Airline specifies object containing the data for selling airline tickets. Used only for bank card payments.
+	//
+	// TicketNumber: Unique ticket number. If you already know the ticket number during payment creation, ticket_number is a required parameter. If you don't, specify booking_reference instead of ticket_number.
+	//
+	// BookingReference: Booking reference number, required if ticket_number is not specified.
+	//
+	// Passengers: List of passengers.
+	//
+	// Legs: List of flight legs.
+	Airline struct {
+		TicketNumber     string        `json:"ticket_number,omitempty" validate:"omitempty,min=1,max=150,numeric"`
+		BookingReference string        `json:"booking_reference,omitempty" validate:"omitempty,min=1,max=20"`
+		Passengers       []Passengers  `json:"passengers,omitempty" validate:"omitempty"`
+		Legs             []AirlineLegs `json:"legs,omitempty" validate:"omitempty"`
+	}
+
+	// AirlineLegs specifies list of flight legs.
+	//
+	// DepartureAirport: Code of the departure airport according to IATA, for example, LED.
+	//
+	// DestinationAirport: Code of the arrival airport according to IATA, for example, AMS.
+	//
+	// DepartureDate: Departure date in the YYYY-MM-DD ISO 8601:2004 format.
+	//
+	// CarrierCode: Airline code according to IATA.
+	AirlineLegs struct {
+		DepartureAirport   string `json:"departure_airport" validate:"required,len=3,alpha"`
+		DestinationAirport string `json:"destination_airport" validate:"required,len=3,alpha"`
+		DepartureDate      string `json:"departure_date" validate:"required,datetime"`
+		CarrierCode        string `json:"carrier_code,omitempty" validate:"omitempty,min=2,max=3"`
+	}
+
+	// Passengers specifies list of passengers.
+	//
+	// FirstName: Passenger's first name. Only use Latin characters, for example, SERGEI.
+	//
+	// LastName: Passenger's last name. Only use Latin characters, for example, IVANOV.
+	Passengers struct {
+		FirstName string `json:"first_name" validate:"required,min=1,max=64"`
+		LastName  string `json:"last_name" validate:"required,min=1,max=64"`
 	}
 
 	// PaymentMethodData is data for payment by a specific method (payment_method). You don't have to pass this object in the request. In this case, the user will choose the payment method on the YUKASSA side.
@@ -84,7 +340,7 @@ type (
 	// Currency: Three-letter currency code in ISO-4217 format. Example: RUB. Must match the subaccount currency (recipient.gateway_id), if you share the payment flows, and the account currency (shopId in your personal account), if you do not share.
 	Amount struct {
 		Value    string `json:"value" validate:"required,money"`
-		Currency `json:"currency" validate:"required,currency"`
+		Currency `json:"currency" validate:"required,iso4217"`
 	}
 
 	// Confirmation specifies the data required to initiate the selected payment confirmation scenario by the user.
@@ -137,10 +393,6 @@ type Currency string
 
 var (
 	RUB Currency = "RUB"
-
-	ValidCurrencies = map[string]struct{}{
-		string(RUB): {},
-	}
 )
 
 type PaymentMethodType string
@@ -220,7 +472,7 @@ type (
 	//
 	// GatewayID: The account ID. It is used to separate payment flows within the same account.
 	Recipient struct {
-		AccountID string `json:"account_id" validate:"required"`
+		AccountID string `json:"account_id,omitempty" validate:"omitempty"`
 		GatewayID string `json:"gateway_id" validate:"required"`
 	}
 
