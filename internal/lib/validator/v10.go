@@ -16,7 +16,7 @@ func NewValidator(log *zap.SugaredLogger) {
 
 	registerValidation("money", moneyValidator, log, newValidate)
 	registerValidation("currency", currencyValidator, log, newValidate)
-	registerValidation("should_exist_field", shouldExistFieldsValidator, log, newValidate)
+	registerValidation("omit_with", omitOptionValidator, log, newValidate)
 
 	Validate = newValidate
 }
@@ -68,7 +68,8 @@ func currencyValidator(log *zap.SugaredLogger) validator.Func {
 	}
 }
 
-func shouldExistFieldsValidator(log *zap.SugaredLogger) validator.Func {
+// omitOptionValidator describes field is no required, but in can only used with chosen field values in struct.
+func omitOptionValidator(log *zap.SugaredLogger) validator.Func {
 	return func(fl validator.FieldLevel) bool {
 		v := fl.Field()
 
@@ -78,29 +79,24 @@ func shouldExistFieldsValidator(log *zap.SugaredLogger) validator.Func {
 		}
 
 		param := fl.Param()
-		words := strings.Fields(param)
 
-		result := make(map[string]string)
-
-		for i := 0; i < len(words)-1; i += 2 {
-			key := words[i]
-			value := words[i+1]
-			result[key] = value
-		}
+		arrParam := strings.Split(param, " ")
+		key := arrParam[0]
+		value := arrParam[1]
 
 		parent := fl.Parent()
 
-		for fieldKey, fieldNameValue := range result {
-			shouldExistValue := parent.FieldByName(fieldNameValue)
+		if parent.Kind() != reflect.Struct {
+			log.Errorf("value %v is not a struct", v)
+			return false
+		}
 
-			if fieldKey != v.String() {
-				continue
-			}
-			//log.Debugf("AAAAAAAAAAAAAAAAAAAA %s", fieldKey)
+		if v.IsZero() && v.String() != parent.FieldByName(key).String() {
+			return true
+		}
 
-			if shouldExistValue.IsZero() || shouldExistValue.String() == "" {
-				return false
-			}
+		if parent.FieldByName(key).String() != value {
+			return false
 		}
 
 		return true
