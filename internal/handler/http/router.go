@@ -1,8 +1,10 @@
 package http
 
 import (
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/imperatorofdwelling/payment-svc/internal/config"
 	v1 "github.com/imperatorofdwelling/payment-svc/internal/handler/http/api/v1"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage"
@@ -16,7 +18,7 @@ type Router struct {
 	Handler *chi.Mux
 }
 
-func NewRouter(s *storage.Storage, log *zap.SugaredLogger) *Router {
+func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfgPayApi config.PayApi) *Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -25,6 +27,10 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger) *Router {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.URLFormat)
 	r.Use(middleware.Timeout(60 * time.Second))
+
+	r.Use(middleware.SetHeader("Authorization", fmt.Sprintf("%d:%s", cfgPayApi.ShopID, cfgPayApi.SecretKey)))
+
+	// TODO Create Idempotency Key middleware
 
 	r.Route("/api/v1", func(r chi.Router) {
 		paymentRepo := postgres.NewPaymentRepo(s.Psql, log.Named("payment_repo"))
