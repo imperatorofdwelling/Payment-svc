@@ -21,7 +21,7 @@ func NewApp() *App {
 
 	storages := storage.GetStorages(cfg, log)
 
-	router := http.NewRouter(storages, log)
+	router := http.NewRouter(storages, log, cfg)
 
 	server := http.NewServer(cfg.Server, router.Handler, log)
 

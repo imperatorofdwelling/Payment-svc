@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/imperatorofdwelling/payment-svc/internal/config"
@@ -18,7 +17,7 @@ type Router struct {
 	Handler *chi.Mux
 }
 
-func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfgPayApi config.PayApi) *Router {
+func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -28,14 +27,12 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfgPayApi config.PayA
 	r.Use(middleware.URLFormat)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	r.Use(middleware.SetHeader("Authorization", fmt.Sprintf("%d:%s", cfgPayApi.ShopID, cfgPayApi.SecretKey)))
-
-	// TODO Create Idempotency Key middleware
-
 	r.Route("/api/v1", func(r chi.Router) {
+		//yooclient := yookassa.NewClient(strconv.Itoa(cfg.ShopID), cfg.SecretKey)
+
 		paymentRepo := postgres.NewPaymentRepo(s.Psql, log.Named("payment_repo"))
 		paymentSvc := service.NewPaymentSvc(paymentRepo, log.Named("payment_service"))
-		v1.NewPaymentHandler(r, paymentSvc, log.Named("payment_handler"))
+		v1.NewPaymentsHandler(r, paymentSvc, log.Named("payment_handler"))
 
 		_ = postgres.NewLogsRepo(s.Psql)
 

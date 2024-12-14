@@ -11,6 +11,7 @@ type ErrType string
 var (
 	ValidationError    ErrType = "validation_error"
 	AuthorizationError ErrType = "authorization_error"
+	DecodeBodyError    ErrType = "decode_body_error"
 )
 
 type ErrResponse struct {
@@ -24,7 +25,8 @@ type Response struct {
 	Err  *ErrResponse `json:"error"`
 }
 
-func Read(r *http.Request, s *any) error {
+func Read(r *http.Request, s any) error {
+	defer r.Body.Close()
 	return json.NewDecoder(r.Body).Decode(s)
 }
 
