@@ -1,0 +1,10 @@
+BEGIN;
+
+DROP TABLE IF EXISTS payment_logs_amount, payment_logs_method, payment_logs;
+
+DROP TYPE IF EXISTS PAYMENT_AMOUNT_CURRENCY;
+DROP TYPE IF EXISTS PAYMENT_STATUS;
+
+DROP EXTENSION IF EXISTS "uuid-ossp";
+
+COMMIT;

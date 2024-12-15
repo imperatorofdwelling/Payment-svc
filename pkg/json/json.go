@@ -9,9 +9,12 @@ import (
 type ErrType string
 
 var (
-	ValidationError    ErrType = "validation_error"
-	AuthorizationError ErrType = "authorization_error"
-	DecodeBodyError    ErrType = "decode_body_error"
+	ValidationError        ErrType = "validation_error"
+	AuthorizationError     ErrType = "authorization_error"
+	DecodeBodyError        ErrType = "decode_body_error"
+	GettingHeaderDataError ErrType = "getting_header_data_error"
+	ExternalApiError       ErrType = "external_api_error"
+	UnmarshallingError     ErrType = "unmarshalling_error"
 )
 
 type ErrResponse struct {

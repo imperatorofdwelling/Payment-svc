@@ -9,7 +9,9 @@ import (
 	"github.com/imperatorofdwelling/payment-svc/internal/storage"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/redis"
+	"github.com/rvinnie/yookassa-sdk-go/yookassa"
 	"go.uber.org/zap"
+	"strconv"
 	"time"
 )
 
@@ -28,7 +30,9 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/api/v1", func(r chi.Router) {
-		//yooclient := yookassa.NewClient(strconv.Itoa(cfg.ShopID), cfg.SecretKey)
+		yooclient := yookassa.NewClient(strconv.Itoa(cfg.ShopID), cfg.SecretKey)
+
+		yookassaHdl := yookassa.NewPaymentHandler(yooclient)
 
 		paymentRepo := postgres.NewPaymentRepo(s.Psql, log.Named("payment_repo"))
 		paymentSvc := service.NewPaymentSvc(paymentRepo, log.Named("payment_service"))
