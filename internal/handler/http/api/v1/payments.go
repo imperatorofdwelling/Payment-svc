@@ -28,33 +28,40 @@ func NewPaymentsHandler(r chi.Router, svc service.IPaymentSvc, yookassaHdl *yook
 			r.Post("/", handler.createPayment)
 		})
 	})
-
 }
 
 func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) {
-	const op = "hanlder.v1.payments.createPayment"
+	const op = "handler.v1.payments.createPayment"
 	var payment yoopayment.Payment
 
 	idempotenceKey := r.Header.Get("Idempotence-Key")
 	if idempotenceKey == "" {
 		h.log.Errorf("%s: %v", op, ErrGettingIdempotenceKey)
 		json.WriteError(w, http.StatusBadRequest, ErrGettingIdempotenceKey.Error(), json.GettingHeaderDataError)
+		return
 	}
 
 	err := json.Read(r, &payment)
 	if err != nil {
 		json.WriteError(w, http.StatusBadRequest, err.Error(), json.DecodeBodyError)
+		return
 	}
 
 	newPayment, err := h.yookassaHdl.WithIdempotencyKey(idempotenceKey).CreatePayment(&payment)
 	if err != nil {
+		h.log.Errorf("%s: %v", op, zap.Error(err))
 		json.WriteError(w, http.StatusInternalServerError, err.Error(), json.ExternalApiError)
+		return
 	}
 
-	//createdPayment := h.svc.CreatePayment(&payment)
+	err = h.svc.CreatePayment(r.Context(), newPayment)
+	if err != nil {
+		h.log.Errorf("%s: %v", op, zap.Error(err))
+		json.WriteError(w, http.StatusInternalServerError, err.Error(), json.InternalApiError)
+		return
+	}
 
 	json.Write(w, http.StatusOK, newPayment)
-
 }
 
 //v := h.svc.GetSTest()

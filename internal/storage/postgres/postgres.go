@@ -15,8 +15,6 @@ func NewPsqlStorage(c config.Postgres) (*sql.DB, error) {
 		return nil, fmt.Errorf("could not connect to postgres: %v", err)
 	}
 
-	defer db.Close()
-
 	err = db.Ping()
 	if err != nil {
 		return nil, fmt.Errorf("could not ping postgres: %v", err)

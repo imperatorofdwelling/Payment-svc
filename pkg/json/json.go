@@ -14,6 +14,7 @@ var (
 	DecodeBodyError        ErrType = "decode_body_error"
 	GettingHeaderDataError ErrType = "getting_header_data_error"
 	ExternalApiError       ErrType = "external_api_error"
+	InternalApiError       ErrType = "internal_api_error"
 	UnmarshallingError     ErrType = "unmarshalling_error"
 )
 

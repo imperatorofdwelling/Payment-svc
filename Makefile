@@ -1,3 +1,5 @@
+include .env
+
 run-local: build
 	@./bin/app -env local
 run-dev: build
@@ -14,7 +16,7 @@ docker-prod: yml-convert-prod
 	@docker compose --env-file .env -f ./docker/prod/docker-compose.yml -p iod-payment up --build -d
 
 ### Migrate ###
-migrate-up:
+migrate-up: create-env
 	@go run cmd/migrator/main.go up
 migrate-down:
 	@go run cmd/migrator/main.go down
