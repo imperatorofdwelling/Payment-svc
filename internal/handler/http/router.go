@@ -31,8 +31,9 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 
 	r.Route("/api/v1", func(r chi.Router) {
 		yooclient := yookassa.NewClient(strconv.Itoa(cfg.ShopID), cfg.SecretKey)
-
 		yookassaHdl := yookassa.NewPaymentHandler(yooclient)
+
+		v1.NewStaticHandler(r, log)
 
 		logsRepo := postgres.NewLogsRepo(s.Psql, log.Named("logs_repo"))
 		logsSvc := service.NewLogsService(logsRepo, log.Named("logs_service"))

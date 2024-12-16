@@ -32,15 +32,6 @@ func (s *LogsSvc) InsertLog(ctx context.Context, payment *yoopayment.Payment) er
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	//var paymentMethod model.PaymentMethod
-
-	//if pm, ok := payment.PaymentMethod.(model.PaymentMethod); ok {
-	//	paymentMethod = pm
-	//} else {
-	//	s.log.Errorf("%s: %v", op, err)
-	//	return fmt.Errorf("%s: %w", op, err)
-	//}
-
 	newLog := model.LogPaymentRequest{
 		TransactionID: transactionID,
 		Status:        string(payment.Status),
@@ -49,7 +40,7 @@ func (s *LogsSvc) InsertLog(ctx context.Context, payment *yoopayment.Payment) er
 		Type:          "bank_card",
 	}
 
-	err = s.repo.InsertLog(ctx, &newLog)
+	err = s.repo.InsertPaymentLog(ctx, &newLog)
 	if err != nil {
 		return err
 	}

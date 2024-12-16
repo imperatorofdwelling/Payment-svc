@@ -11,7 +11,7 @@ import (
 )
 
 type ILogsRepo interface {
-	InsertLog(context.Context, *model.LogPaymentRequest) error
+	InsertPaymentLog(context.Context, *model.LogPaymentRequest) error
 }
 
 type LogsRepo struct {
@@ -23,7 +23,7 @@ func NewLogsRepo(db *sql.DB, log *zap.SugaredLogger) *LogsRepo {
 	return &LogsRepo{db, log}
 }
 
-func (r *LogsRepo) InsertLog(ctx context.Context, p *model.LogPaymentRequest) error {
+func (r *LogsRepo) InsertPaymentLog(ctx context.Context, p *model.LogPaymentRequest) error {
 	const op = "repo.postgres.logs.InsertLog"
 
 	tx, err := r.db.BeginTx(ctx, nil)
