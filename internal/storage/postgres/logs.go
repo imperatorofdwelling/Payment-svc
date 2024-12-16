@@ -33,7 +33,7 @@ func (r *LogsRepo) InsertPaymentLog(ctx context.Context, p *model.LogPaymentRequ
 
 	defer tx.Rollback()
 
-	stmtPayment, err := tx.PrepareContext(ctx, "INSERT INTO payment_logs(id, transaction_id, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)")
+	stmtPayment, err := tx.PrepareContext(ctx, "INSERT INTO deals_logs(id, transaction_id, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)")
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -47,7 +47,7 @@ func (r *LogsRepo) InsertPaymentLog(ctx context.Context, p *model.LogPaymentRequ
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	stmtAmount, err := tx.PrepareContext(ctx, "INSERT INTO payment_logs_amount(value, currency, payment_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)")
+	stmtAmount, err := tx.PrepareContext(ctx, "INSERT INTO deals_logs_amount(value, currency, payment_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)")
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -59,7 +59,7 @@ func (r *LogsRepo) InsertPaymentLog(ctx context.Context, p *model.LogPaymentRequ
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	stmtMethod, err := tx.PrepareContext(ctx, "INSERT INTO payment_logs_method(payment_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4)")
+	stmtMethod, err := tx.PrepareContext(ctx, "INSERT INTO deals_logs_method(payment_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4)")
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}

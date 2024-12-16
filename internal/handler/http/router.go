@@ -35,14 +35,16 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 
 		v1.NewStaticHandler(r, log)
 
+		cardsRepo := postgres.NewCardsRepo(s.Psql, log.Named("cards_repo"))
+		cardsSvc := service.NewCardsService(cardsRepo, log.Named("cards_service"))
+		v1.NewCardsHandler(r, cardsSvc, log.Named("cards_handler"))
+
 		logsRepo := postgres.NewLogsRepo(s.Psql, log.Named("logs_repo"))
 		logsSvc := service.NewLogsService(logsRepo, log.Named("logs_service"))
 
 		paymentRepo := postgres.NewPaymentRepo(s.Psql, log.Named("payment_repo"))
 		paymentSvc := service.NewPaymentSvc(paymentRepo, logsSvc, log.Named("payment_service"))
 		v1.NewPaymentsHandler(r, paymentSvc, yookassaHdl, log.Named("payment_handler"))
-
-		_ = postgres.NewCardRepo(s.Psql)
 
 		_ = redis.NewTransactionRepo(s.Redis)
 	})

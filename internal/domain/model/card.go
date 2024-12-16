@@ -1,16 +1,17 @@
 package model
 
-import "time"
-
-const (
-	CardLen int = 16
+import (
+	"github.com/google/uuid"
+	"time"
 )
 
 type Card struct {
-	ID          int       `json:"id"`
+	ID          uuid.UUID `json:"id"`
 	UserId      string    `json:"user_id"`
-	CardSynonym string    `json:"card_synonym"`
+	CountryCode string    `json:"country_code"`
+	Synonym     string    `json:"synonym"`
 	CardMask    string    `json:"card_mask"`
+	Type        string    `json:"type"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
