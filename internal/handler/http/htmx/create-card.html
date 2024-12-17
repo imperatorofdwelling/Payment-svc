@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Получение данных банковской карты продавца с помощью виджета ЮKassa</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
+    <script src="https://static.yoomoney.ru/payouts-data-widget-front/widget.js"></script>
+    <style>
+        .htmx-indicator{
+            opacity:0;
+            transition: opacity 10ms ease-in;
+        }
+        .htmx-request .htmx-indicator{
+            opacity:1
+        }
+    </style>
+</head>
+<body class="bg-gray-200 p-10">
+<div class="max-w-xl mx-auto">
+    <h1 class="text-3xl mb-5 flex justify-center text-center"><span>{{ .Data.Text }}</span></h1>
+    <h2 class="mb-5 flex justify-center text-center gap-x-1">Пользователь: <span id="user-id">{{ .Data.UserID }}</span></h2>
+    <div id="payout-form"></div>
+    <div>
+        <div class="my-2 htmx-indicator" >Loading...</div>
+        <div id="results" class="flex justify-center"></div>
+    </div>
+</div>
+
+<script>
+    const userId = document.getElementById("user-id").textContent;
+
+    //Инициализация виджета. Все параметры обязательные.
+    const payoutsData = new window.PayoutsData({
+        successCallback(data) {
+            //Обработка ответа с токеном карты
+            // fetch("/api/v1/cards/create", {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     body: JSON.stringify({
+            //         "user_id": userId,
+            //         ...data
+            //     })
+            // })
+            //     .then(response => {
+            //         if (!response.ok) {
+            //             throw new Error()
+            //         }
+            //         return response.json();
+            //     })
+            //     .then(() => window.location.href = 'https://ya.ru/')
+            //     .catch(error => console.error(error))
+
+            console.log(data)
+        },
+        errorCallback(error) {
+            //Обработка ошибок
+            console.log(error)
+        }
+    });
+
+    //Отображение платежной формы в контейнере
+    payoutsData.render('payout-form')
+        //После отображения платежной формы метод render возвращает Promise (можно не использовать).
+        .then(() => {
+            //Код, который нужно выполнить после отображения платежной формы.
+        });
+</script>
+</body>
+</html>

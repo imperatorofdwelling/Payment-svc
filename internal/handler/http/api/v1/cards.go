@@ -19,7 +19,7 @@ func NewCardsHandler(r chi.Router, svc service.ICardsSvc, log *zap.SugaredLogger
 
 	r.Route("/cards", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Post("/", handler.CreateCard)
+			r.Post("/create", handler.CreateCard)
 		})
 	})
 }

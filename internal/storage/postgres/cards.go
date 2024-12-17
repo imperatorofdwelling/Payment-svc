@@ -26,14 +26,14 @@ func NewCardsRepo(db *sql.DB, log *zap.SugaredLogger) *CardsRepo {
 func (r *CardsRepo) CreateCard(ctx context.Context, card model.Card) error {
 	const op = "repo.postgres.card.CreateCard"
 
-	stmt, err := r.db.PrepareContext(ctx, "INSERT INTO bank_cards(user_id, country_code, synonym, card_mask, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)")
+	stmt, err := r.db.PrepareContext(ctx, "INSERT INTO bank_cards(user_id, bank_name, country_code, synonym, card_mask, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)")
 	if err != nil {
 		return fmt.Errorf("%v: %v", op, err)
 	}
 
 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, card.UserId, card.CountryCode, card.Synonym, card.CardMask, card.Type, time.Now(), time.Now())
+	_, err = stmt.ExecContext(ctx, card.UserId, card.BankName, card.CountryCode, card.Synonym, card.CardMask, card.Type, time.Now(), time.Now())
 	if err != nil {
 		return fmt.Errorf("%v: %v", op, err)
 	}

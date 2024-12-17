@@ -18,6 +18,22 @@
     const payoutsData = new window.PayoutsData({
         successCallback(data) {
             //Обработка ответа с токеном карты
+            fetch("/api/v1/cards/create", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error()
+                    }
+                    return response.json();
+                })
+                .then(() => window.location.href = 'https://ya.ru/')
+                .catch(error => console.error(error))
+
             console.log(data)
         },
         errorCallback(error) {

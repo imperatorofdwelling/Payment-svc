@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/imperatorofdwelling/payment-svc/internal/config"
 	v1 "github.com/imperatorofdwelling/payment-svc/internal/handler/http/api/v1"
+	"github.com/imperatorofdwelling/payment-svc/internal/handler/http/htmx"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
@@ -34,6 +35,8 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 		yookassaHdl := yookassa.NewPaymentHandler(yooclient)
 
 		v1.NewStaticHandler(r, log)
+
+		htmx.NewHTMXHandler(r, log.Named("htmx_handler"))
 
 		cardsRepo := postgres.NewCardsRepo(s.Psql, log.Named("cards_repo"))
 		cardsSvc := service.NewCardsService(cardsRepo, log.Named("cards_service"))
