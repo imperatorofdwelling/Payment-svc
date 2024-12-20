@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS bank_cards (
     user_id UUID NOT NULL,
     bank_name varchar(255),
     country_code varchar(255),
-    synonym varchar(100) NOT NULL UNIQUE,
+    synonim varchar(100) NOT NULL UNIQUE,
     card_mask varchar(20) NOT NULL,
     type varchar(100) NOT NULL,
     created_at timestamp DEFAULT CURRENT_TIMESTAMP,

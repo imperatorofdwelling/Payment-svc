@@ -34,8 +34,6 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 		yooclient := yookassa.NewClient(strconv.Itoa(cfg.ShopID), cfg.SecretKey)
 		yookassaHdl := yookassa.NewPaymentHandler(yooclient)
 
-		v1.NewStaticHandler(r, log)
-
 		htmx.NewHTMXHandler(r, log.Named("htmx_handler"))
 
 		cardsRepo := postgres.NewCardsRepo(s.Psql, log.Named("cards_repo"))

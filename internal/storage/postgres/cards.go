@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"go.uber.org/zap"
 	"time"
@@ -11,7 +12,10 @@ import (
 
 type ICardsRepo interface {
 	CreateCard(context.Context, model.Card) error
+	UpdateCard(context.Context, model.Card) error
 	CardSynonymIsExists(ctx context.Context, synonym string) (bool, error)
+	CheckCardExistsByUserID(ctx context.Context, userID uuid.UUID) (bool, error)
+	DeleteCardByUserID(context.Context, uuid.UUID) error
 }
 
 type CardsRepo struct {
@@ -26,14 +30,32 @@ func NewCardsRepo(db *sql.DB, log *zap.SugaredLogger) *CardsRepo {
 func (r *CardsRepo) CreateCard(ctx context.Context, card model.Card) error {
 	const op = "repo.postgres.card.CreateCard"
 
-	stmt, err := r.db.PrepareContext(ctx, "INSERT INTO bank_cards(user_id, bank_name, country_code, synonym, card_mask, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)")
+	stmt, err := r.db.PrepareContext(ctx, "INSERT INTO bank_cards(user_id, bank_name, country_code, synonim, card_mask, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)")
 	if err != nil {
 		return fmt.Errorf("%v: %v", op, err)
 	}
 
 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, card.UserId, card.BankName, card.CountryCode, card.Synonym, card.CardMask, card.Type, time.Now(), time.Now())
+	_, err = stmt.ExecContext(ctx, card.UserId, card.BankName, card.CountryCode, card.Synonim, card.CardMask, card.Type, time.Now(), time.Now())
+	if err != nil {
+		return fmt.Errorf("%v: %v", op, err)
+	}
+
+	return nil
+}
+
+func (r *CardsRepo) UpdateCard(ctx context.Context, card model.Card) error {
+	const op = "repo.postgres.card.UpdateCard"
+
+	stmt, err := r.db.PrepareContext(ctx, "UPDATE bank_cards SET bank_name=$1, country_code=$2, synonim=$3, card_mask=$4, type=$5, updated_at=$6 WHERE user_id=$7")
+	if err != nil {
+		return fmt.Errorf("%v: %v", op, err)
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx, card.BankName, card.CountryCode, card.Synonim, card.CardMask, card.Type, time.Now(), card.UserId)
 	if err != nil {
 		return fmt.Errorf("%v: %v", op, err)
 	}
@@ -44,7 +66,7 @@ func (r *CardsRepo) CreateCard(ctx context.Context, card model.Card) error {
 func (r *CardsRepo) CardSynonymIsExists(ctx context.Context, synonym string) (bool, error) {
 	const op = "repo.postgres.card.CardSynonymIsExists"
 
-	stmt, err := r.db.PrepareContext(ctx, "SELECT * FROM bank_cards WHERE synonym = $1 LIMIT 1")
+	stmt, err := r.db.PrepareContext(ctx, "SELECT * FROM bank_cards WHERE synonim = $1 LIMIT 1")
 	if err != nil {
 		return false, fmt.Errorf("%v: %v", op, err)
 	}
@@ -62,4 +84,45 @@ func (r *CardsRepo) CardSynonymIsExists(ctx context.Context, synonym string) (bo
 	}
 
 	return true, nil
+}
+
+func (r *CardsRepo) CheckCardExistsByUserID(ctx context.Context, userID uuid.UUID) (bool, error) {
+	const op = "repo.postgres.card.CheckCardExistsByUserID"
+
+	stmt, err := r.db.PrepareContext(ctx, "SELECT EXISTS(SELECT * FROM bank_cards WHERE user_id = $1)")
+	if err != nil {
+		return false, fmt.Errorf("%v: %v", op, err)
+	}
+
+	defer stmt.Close()
+
+	var exists bool
+
+	err = stmt.QueryRowContext(ctx, userID).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("%v: %v", op, err)
+	}
+
+	return exists, nil
+}
+
+func (r *CardsRepo) DeleteCardByUserID(ctx context.Context, userID uuid.UUID) error {
+	const op = "repo.postgres.card.DeleteCardByUserID"
+
+	stmt, err := r.db.PrepareContext(ctx, "DELETE FROM bank_cards WHERE user_id = $1")
+	if err != nil {
+		return fmt.Errorf("%v: %v", op, err)
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("%v: %v", op, err)
+	}
+
+	return nil
 }

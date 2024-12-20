@@ -26,7 +26,7 @@ func NewHTMXHandler(r chi.Router, logger *zap.SugaredLogger) *htmxHandler {
 	htmx.UseTemplateCache = false
 
 	r.Route("/htmx", func(r chi.Router) {
-		r.Get("/cards/create-card/{userId}", hdl.SaveCardPage)
+		r.Get("/cards/{userId}", hdl.SaveCardPage)
 	})
 
 	return hdl
@@ -38,8 +38,9 @@ func (hdl *htmxHandler) SaveCardPage(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "userId")
 
 	data := map[string]any{
-		"Text":   "The form for entering the bank card number.",
-		"UserID": userID,
+		"Text":     "The form for entering the bank card number.",
+		"UserID":   userID,
+		"Redirect": "https://ya.ru/",
 	}
 
 	page := htmx.NewComponent("create-card.html").FS(templates).SetData(data)

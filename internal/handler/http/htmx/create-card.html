@@ -22,44 +22,44 @@
 <body class="bg-gray-200 p-10">
 <div class="max-w-xl mx-auto">
     <h1 class="text-3xl mb-5 flex justify-center text-center"><span>{{ .Data.Text }}</span></h1>
-    <h2 class="mb-5 flex justify-center text-center gap-x-1">Пользователь: <span id="user-id">{{ .Data.UserID }}</span></h2>
     <div id="payout-form"></div>
     <div>
         <div class="my-2 htmx-indicator" >Loading...</div>
         <div id="results" class="flex justify-center"></div>
     </div>
 </div>
-
 <script>
-    const userId = document.getElementById("user-id").textContent;
+    const userId = "{{ .Data.UserID }}"
+    const redirectURL = "{{ .Data.Redirect }}"
 
-    //Инициализация виджета. Все параметры обязательные.
     const payoutsData = new window.PayoutsData({
         successCallback(data) {
-            //Обработка ответа с токеном карты
-            // fetch("/api/v1/cards/create", {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            //     body: JSON.stringify({
-            //         "user_id": userId,
-            //         ...data
-            //     })
-            // })
-            //     .then(response => {
-            //         if (!response.ok) {
-            //             throw new Error()
-            //         }
-            //         return response.json();
-            //     })
-            //     .then(() => window.location.href = 'https://ya.ru/')
-            //     .catch(error => console.error(error))
+            const bodyPayload = {
+                user_id: userId,
+                bank_name: data.bankName,
+                synonim: data.synonim,
+                card_mask: data.panmask,
+                country_code: data.countryCode,
+                type: data.type
 
-            console.log(data)
+            }
+            fetch("/api/v1/cards/create", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(bodyPayload)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error()
+                    }
+                    return response.json();
+                })
+                .then(() => window.location.href = redirectURL)
+                .catch(error => console.error(error))
         },
         errorCallback(error) {
-            //Обработка ошибок
             console.log(error)
         }
     });

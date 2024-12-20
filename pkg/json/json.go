@@ -16,6 +16,7 @@ var (
 	ExternalApiError       ErrType = "external_api_error"
 	InternalApiError       ErrType = "internal_api_error"
 	UnmarshallingError     ErrType = "unmarshalling_error"
+	ParseError             ErrType = "parse_error"
 )
 
 type ErrResponse struct {
