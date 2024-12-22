@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
 	"go.uber.org/zap"
-	"strings"
 )
 
 type ILogsSvc interface {
@@ -37,9 +37,14 @@ func (s *LogsSvc) InsertLog(ctx context.Context, log *model.Log) error {
 func (s *LogsSvc) UpdateLogStatus(ctx context.Context, notification *model.Notification) error {
 	const op = "service.logs.UpdateLogStatus"
 
-	event := strings.Split(notification.Event, ".")
-	if len(event) != 2 {
-		return fmt.Errorf("notification error in %s", op)
+	notificationUUID, err := uuid.Parse(notification.Object.ID)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	err = s.repo.UpdateLogStatus(ctx, notificationUUID, notification.Object.Status)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	return nil

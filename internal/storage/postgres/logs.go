@@ -13,6 +13,7 @@ import (
 type ILogsRepo interface {
 	InsertLog(context.Context, *model.Log) error
 	CheckTransactionIDExists(ctx context.Context, transactionID uuid.UUID) (bool, error)
+	UpdateLogStatus(ctx context.Context, transactionID uuid.UUID, status model.TransactionStatus) error
 }
 
 type LogsRepo struct {
@@ -81,4 +82,22 @@ func (r *LogsRepo) CheckTransactionIDExists(ctx context.Context, transactionID u
 	}
 
 	return exists, nil
+}
+
+func (r *LogsRepo) UpdateLogStatus(ctx context.Context, transactionID uuid.UUID, status model.TransactionStatus) error {
+	const op = "repo.postgres.logs.UpdateLogStatus"
+
+	stmt, err := r.db.PrepareContext(ctx, `UPDATE logs SET status = $1 WHERE transaction_id = $2`)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx, status, transactionID)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
 }

@@ -42,6 +42,7 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 
 		logsRepo := postgres.NewLogsRepo(s.Psql, log.Named("logs_repo"))
 		logsSvc := service.NewLogsService(logsRepo, log.Named("logs_service"))
+		v1.NewLogsHandler(r, logsSvc, log.Named("logs_handler"))
 
 		paymentRepo := postgres.NewPaymentRepo(s.Psql, log.Named("payment_repo"))
 		paymentSvc := service.NewPaymentSvc(paymentRepo, logsSvc, log.Named("payment_service"))

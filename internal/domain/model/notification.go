@@ -1,9 +1,9 @@
 package model
 
 type Notification struct {
-	Type   string     `json:"type"`
-	Event  string     `json:"event"`
-	Object PaymentRes `json:"object"`
+	Type   string   `json:"type"`
+	Event  string   `json:"event"`
+	Object *Payment `json:"object"`
 }
 
 type TransactionType string

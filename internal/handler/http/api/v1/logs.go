@@ -35,7 +35,12 @@ func (h *logsHandler) changeStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.log.Debug(op, zap.Any("notification", notification))
+	err = h.svc.UpdateLogStatus(r.Context(), &notification)
+	if err != nil {
+		h.log.Error(op, zap.Error(err))
+		json.WriteError(w, http.StatusInternalServerError, err.Error(), json.DecodeBodyError)
+		return
+	}
 
-	json.Write(w, http.StatusOK, notification)
+	json.Write(w, http.StatusNoContent, nil)
 }
