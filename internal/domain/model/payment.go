@@ -66,7 +66,7 @@ type (
 	// MerchantCustomerID: The identifier of the customer in your system, such as email address or phone number. No more than 200 characters. Specified if you want to save a bank card and offer it for a recurring payment in the YooMoney payment widget .
 	Payment struct {
 		ID                   string            `json:"id,omitempty"`
-		Status               TransactionStatus `json:"status" validate:"required, oneof=pending waiting_for_capture succeeded canceled"`
+		Status               TransactionStatus `json:"status,omitempty" validate:"omitempty,oneof=pending waiting_for_capture succeeded canceled"`
 		Amount               *Amount           `json:"amount,omitempty"`
 		IncomeAmount         *Amount           `json:"income_amount,omitempty"`
 		Capture              bool              `json:"capture,omitempty"`
@@ -453,7 +453,7 @@ type (
 	Confirmation struct {
 		Type            ConfirmationType `json:"type" validate:"required"`
 		ReturnURL       string           `json:"return_url,omitempty" validate:"required_if=Type redirect,required_if=Type mobile_application,omitempty,url"`
-		ConfirmationURL string           `json:"confirmation_url,omitempty" validate:"required_if=Type redirect,omitempty,url"`
+		ConfirmationURL string           `json:"confirmation_url,omitempty" validate:"omitempty,required_if=Type redirect,omitempty,url"`
 		Locale          string           `json:"locale,omitempty" validate:"omitempty,oneof=ru_RU en_US"`
 		Enforce         bool             `json:"enforce,omitempty" validate:"omitempty"`
 	}

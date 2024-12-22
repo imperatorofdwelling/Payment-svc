@@ -2,7 +2,9 @@ package v1
 
 import (
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
+	v10 "github.com/imperatorofdwelling/payment-svc/internal/lib/validator"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"github.com/imperatorofdwelling/payment-svc/pkg/json"
 	"github.com/imperatorofdwelling/payment-svc/pkg/yookassa"
@@ -47,6 +49,12 @@ func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if err := v10.Validate.Struct(payment); err != nil {
+		validationErr := err.(validator.ValidationErrors)
+		json.WriteError(w, http.StatusBadRequest, validationErr.Error(), json.ValidationError)
+		return
+	}
+
 	newPayment, err := h.yookassaHdl.CreatePayment(&payment, idempotenceKey)
 	if err != nil {
 		h.log.Errorf("%s: %v", op, err.Error())
@@ -73,11 +81,3 @@ func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) 
 func (h *paymentsHandler) ChangeStatus(w http.ResponseWriter, r *http.Request) {
 	const op = "handler.v1.payments.ChangeStatus"
 }
-
-//if err := v10.Validate.Struct(tt); err != nil {
-//	validationErr := err.(validator.ValidationErrors)
-//	json.WriteError(w, http.StatusBadRequest, validationErr.Error(), json.ValidationError)
-//	return
-//}
-
-//json.Write(w, http.StatusOK, tt)
