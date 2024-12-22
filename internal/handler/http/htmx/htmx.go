@@ -32,6 +32,8 @@ func NewHTMXHandler(r chi.Router, logger *zap.SugaredLogger) *htmxHandler {
 	return hdl
 }
 
+// TODO implement html page with redirect and userID in SaveCardPage
+
 func (hdl *htmxHandler) SaveCardPage(w http.ResponseWriter, r *http.Request) {
 	h := hdl.htmx.NewHandler(w, r)
 

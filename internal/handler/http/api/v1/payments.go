@@ -2,10 +2,10 @@ package v1
 
 import (
 	"github.com/go-chi/chi/v5"
+	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"github.com/imperatorofdwelling/payment-svc/pkg/json"
-	"github.com/rvinnie/yookassa-sdk-go/yookassa"
-	yoopayment "github.com/rvinnie/yookassa-sdk-go/yookassa/payment"
+	"github.com/imperatorofdwelling/payment-svc/pkg/yookassa"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -13,10 +13,10 @@ import (
 type paymentsHandler struct {
 	svc         service.IPaymentSvc
 	log         *zap.SugaredLogger
-	yookassaHdl *yookassa.PaymentHandler
+	yookassaHdl *yookassa.PaymentsHandler
 }
 
-func NewPaymentsHandler(r chi.Router, svc service.IPaymentSvc, yookassaHdl *yookassa.PaymentHandler, log *zap.SugaredLogger) {
+func NewPaymentsHandler(r chi.Router, svc service.IPaymentSvc, yookassaHdl *yookassa.PaymentsHandler, log *zap.SugaredLogger) {
 	handler := &paymentsHandler{
 		svc:         svc,
 		log:         log,
@@ -32,7 +32,7 @@ func NewPaymentsHandler(r chi.Router, svc service.IPaymentSvc, yookassaHdl *yook
 
 func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) {
 	const op = "handler.v1.payments.createPayment"
-	var payment yoopayment.Payment
+	var payment model.Payment
 
 	idempotenceKey := r.Header.Get("Idempotence-Key")
 	if idempotenceKey == "" {
@@ -47,10 +47,16 @@ func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	newPayment, err := h.yookassaHdl.WithIdempotencyKey(idempotenceKey).CreatePayment(&payment)
+	newPayment, err := h.yookassaHdl.CreatePayment(&payment, idempotenceKey)
 	if err != nil {
-		h.log.Errorf("%s: %v", op, zap.Error(err))
-		json.WriteError(w, http.StatusInternalServerError, err.Error(), json.ExternalApiError)
+		h.log.Errorf("%s: %v", op, err.Error())
+		json.WriteError(w, http.StatusBadRequest, err.Error(), json.ExternalApiError)
+		return
+	}
+
+	if newPayment.Status == "" {
+		h.log.Error("invalid response from API", zap.String("op", op), zap.String("description", newPayment.Description))
+		json.WriteError(w, http.StatusBadRequest, newPayment.Description, json.ExternalApiError)
 		return
 	}
 
@@ -64,7 +70,9 @@ func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) 
 	json.Write(w, http.StatusOK, newPayment)
 }
 
-//v := h.svc.GetSTest()
+func (h *paymentsHandler) ChangeStatus(w http.ResponseWriter, r *http.Request) {
+	const op = "handler.v1.payments.ChangeStatus"
+}
 
 //if err := v10.Validate.Struct(tt); err != nil {
 //	validationErr := err.(validator.ValidationErrors)

@@ -3,15 +3,15 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
-	yoopayment "github.com/rvinnie/yookassa-sdk-go/yookassa/payment"
 	"go.uber.org/zap"
+	"strings"
 )
 
 type ILogsSvc interface {
-	InsertLog(ctx context.Context, payment *yoopayment.Payment) error
+	InsertLog(ctx context.Context, payment *model.Log) error
+	UpdateLogStatus(ctx context.Context, payment *model.Notification) error
 }
 
 type LogsSvc struct {
@@ -23,26 +23,23 @@ func NewLogsService(repo postgres.ILogsRepo, log *zap.SugaredLogger) *LogsSvc {
 	return &LogsSvc{repo, log}
 }
 
-func (s *LogsSvc) InsertLog(ctx context.Context, payment *yoopayment.Payment) error {
+func (s *LogsSvc) InsertLog(ctx context.Context, log *model.Log) error {
 	const op = "service.logs.InsertLog"
 
-	transactionID, err := uuid.Parse(payment.ID)
-	if err != nil {
-		s.log.Errorf("%s: %v", op, err)
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	newLog := model.LogPaymentRequest{
-		TransactionID: transactionID,
-		Status:        string(payment.Status),
-		Value:         payment.Amount.Value,
-		Currency:      payment.Amount.Currency,
-		Type:          "bank_card",
-	}
-
-	err = s.repo.InsertPaymentLog(ctx, &newLog)
+	err := s.repo.InsertLog(ctx, log)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (s *LogsSvc) UpdateLogStatus(ctx context.Context, notification *model.Notification) error {
+	const op = "service.logs.UpdateLogStatus"
+
+	event := strings.Split(notification.Event, ".")
+	if len(event) != 2 {
+		return fmt.Errorf("notification error in %s", op)
 	}
 
 	return nil

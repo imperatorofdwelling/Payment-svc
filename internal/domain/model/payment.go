@@ -1,8 +1,106 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type (
+	// Payment object contains all currently relevant information about the payment.
+	//
+	// ID: payment id.
+	//
+	// Status specifies payment status, possible values: pending, waiting_for_capture, succeeded, canceled.
+	//
+	// Amount: payment amount. Sometimes YouKassa partners charge an extra commission, which is not included in this amount.
+	//
+	// IncomeAmount: amount of payment to be received by the store: the amount value minus the YooMoney commission.
+	//
+	// Capture: Automatic acceptance of the received payment. Possible values: true — the payment is debited immediately (payment in one stage); false — the payment is held and debited upon your request (payment in two stages ).
+	//
+	// Description: The description of the transaction (no more than 128 characters), which you will see in the personal account of the user, and the user — when paying. For example: "Payment for order No. 72 for user@yoomoney.ru ".
+	//
+	// Receipt: Data for the formation of the receipt. It is necessary to transmit in these cases: you are a company or sole proprietor and you use Checks from YUKASSA to pay in compliance with the requirements of Federal Law No. 54; you are a company or sole proprietor, for payment in compliance with the requirements of Federal Law No. 54, you use a third-party online sales register and send data for receipts according to one of the scenarios: Payment and receipt at the same time, or First the receipt, then the payment ; you are self-employed and use the UCassa solution for auto-sending checks.
+	//
+	// Recipient: payment recipient. Required for separating payment flows within one account or making payments to other accounts.
+	//
+	// PaymentMethodData: data for payment by a specific method (payment_method). You don't have to pass this object in the request. In this case, the user will choose the payment method on the YUKASSA side.
+	//
+	// CapturedAt: Time of order creation, based on UTC and specified in the ISO 8601 format.
+	//
+	// CreatedAt: Time of order creation, based on UTC and specified in the ISO 8601 format.
+	//
+	// ExpiresAt: The period during which you can cancel or capture a payment for free.
+	//
+	// Confirmation: The data required to initiate the selected payment confirmation scenario by the user.
+	//
+	// Test: A sign of a test operation.
+	//
+	// RefundedAmount: The amount refunded to the user. Specified if the payment has successful refunds.
+	//
+	// Paid specifies payment indication.
+	//
+	// Refundable: The ability to make a refund via the API.
+	//
+	// ReceiptRegistration: status of receipt delivery.
+	//
+	// Metadata: Any additional data that you need to work with (for example, your internal order ID). They are transmitted as a set of key-value pairs and are returned in a response from UCassa. Restrictions: maximum of 16 keys, the key name is no more than 32 characters, the key value is no more than 512 characters, the data type is a string in UTF-8 format.
+	//
+	// PaymentToken: One-time payment token generated with Checkout.js or mobile SDK .
+	//
+	// PaymentMethodID: Saved payment method 's ID.
+	//
+	// SavePaymentMethod: Saving payment data for making autopayments. Possible values: true — save the payment method (save the payment data); false — make a payment without saving the payment method. Available only after consultation with the Kassa manager.
+	//
+	// ClientIP: User’s IPv4 or IPv6 address. If not specified, the TCP connection’s IP address is used.
+	//
+	// Metadata: Any additional data you might require for processing payments (for example, your internal order ID), specified as a “key-value” pair and returned in response from YooMoney. Limitations: no more than 16 keys, no more than 32 characters in the key’s title, no more than 512 characters in the key’s value, data type is a string in the UTF-8 format.
+	//
+	// CancellationDetails: Commentary to the canceled status: who and why canceled the payment.
+	//
+	// AuthorizationDetails: Information about the authorization of the payment when paying with a bank card. Only available for these payment methods: bank card, MirPay, SberPay, T-Pay.
+	//
+	// Transfers: Information about money distribution: the amounts of transfers and the stores to be transferred to. Specified if you use Split payments .
+	//
+	// Deal: The deal within which the payment is being carried out. Specified if you use Safe deal .
+	//
+	// MerchantCustomerID: The identifier of the customer in your system, such as email address or phone number. No more than 200 characters. Specified if you want to save a bank card and offer it for a recurring payment in the YooMoney payment widget .
+	Payment struct {
+		ID                   string            `json:"id,omitempty"`
+		Status               TransactionStatus `json:"status" validate:"required, oneof=pending waiting_for_capture succeeded canceled"`
+		Amount               *Amount           `json:"amount,omitempty"`
+		IncomeAmount         *Amount           `json:"income_amount,omitempty"`
+		Capture              bool              `json:"capture,omitempty"`
+		Description          string            `json:"description,omitempty" validate:"omitempty,max=128"`
+		Receipt              *Receipt          `json:"receipt,omitempty" validate:"omitempty"`
+		Recipient            *Recipient        `json:"recipient,omitempty" validate:"omitempty"`
+		PaymentMethodData    `json:"payment_method,omitempty" validate:"omitempty"`
+		CapturedAt           *time.Time `json:"captured_at,omitempty" validate:"omitempty,datetime"`
+		CreatedAt            *time.Time `json:"created_at,omitempty" validate:"omitempty,datetime"`
+		ExpiresAt            *time.Time `json:"expires_at,omitempty" validate:"omitempty,datetime"`
+		Confirmation         `json:"confirmation,omitempty" validate:"omitempty"`
+		Test                 bool                  `json:"test,omitempty"`
+		RefundedAmount       *Amount               `json:"refunded_amount,omitempty"`
+		Paid                 bool                  `json:"paid,omitempty"`
+		Refundable           bool                  `json:"refundable,omitempty"`
+		ReceiptRegistration  TransactionStatus     `json:"receipt_registration,omitempty"`
+		Metadata             interface{}           `json:"metadata" validate:"omitempty"`
+		CancellationDetails  *CancellationDetails  `json:"cancellation_details,omitempty"`
+		AuthorizationDetails *AuthorizationDetails `json:"authorization_details" validate:"omitempty"`
+		Transfers            *Transfers            `json:"transfers,omitempty" validate:"omitempty"`
+		Deal                 *Deal                 `json:"deal,omitempty" validate:"omitempty"`
+		MerchantCustomerID   string                `json:"merchant_customer_id,omitempty" validate:"omitempty,max=200"`
+	}
+
+	// CancellationDetails define commentary to the canceled status: who and why canceled the payment..
+	//
+	// Party: The participant of the payment process that made the decision to cancel the payment. Possible values are yoo_money, payment_network, and merchant.
+	//
+	// Reason: reason behind the cancelation.
+	CancellationDetails struct {
+		Party  string `json:"party,omitempty"`
+		Reason string `json:"reason,omitempty"`
+	}
+
 	// PaymentReq define payment request.
 	//
 	// Amount: payment amount. Sometimes YouKassa partners charge an extra commission, which is not included in this amount.
@@ -39,23 +137,23 @@ type (
 	//
 	// Receiver: Payment receiver's details specified when you want to add money to e-wallet, bank account, or phone balance .
 	PaymentReq struct {
-		Amount             `json:"amount" validate:"required"`
-		Capture            bool `json:"capture,omitempty"`
-		PaymentMethodData  `json:"payment_method_data,omitempty" validate:"omitempty"`
-		Confirmation       `json:"confirmation,omitempty" validate:"omitempty"`
-		Description        string `json:"description,omitempty" validate:"omitempty,max=128"`
-		Receipt            `json:"receipt,omitempty" validate:"omitempty"`
-		Recipient          `json:"recipient,omitempty" validate:"omitempty"`
-		PaymentToken       string `json:"payment_token,omitempty"`
-		PaymentMethodID    string `json:"payment_method_id,omitempty" validate:"omitempty,uuid"`
-		SavePaymentMethod  bool   `json:"save_payment_method,omitempty"`
-		ClientIP           string `json:"client_ip,omitempty" validate:"omitempty,ip4_addr|ip6_addr"`
-		Metadata           any    `json:"metadata,omitempty" validate:"omitempty"`
-		Airline            `json:"airline,omitempty" validate:"omitempty"`
-		Transfers          `json:"transfers,omitempty" validate:"omitempty"`
-		Deal               `json:"deal,omitempty" validate:"omitempty"`
-		MerchantCustomerID string `json:"merchant_customer_id,omitempty" validate:"omitempty,max=200"`
-		Receiver           `json:"receiver,omitempty" validate:"omitempty"`
+		Amount  `json:"amount" validate:"required"`
+		Capture bool `json:"capture,omitempty"`
+		//PaymentMethodData `json:"payment_method_data,omitempty" validate:"omitempty"`
+		Confirmation `json:"confirmation,omitempty" validate:"omitempty"`
+		Description  string `json:"description,omitempty" validate:"omitempty,max=128"`
+		//Receipt            `json:"receipt,omitempty" validate:"omitempty"`
+		//Recipient          `json:"recipient,omitempty" validate:"omitempty"`
+		//PaymentToken       string `json:"payment_token,omitempty"`
+		//PaymentMethodID    string `json:"payment_method_id,omitempty" validate:"omitempty,uuid"`
+		//SavePaymentMethod  bool   `json:"save_payment_method,omitempty"`
+		//ClientIP           string `json:"client_ip,omitempty" validate:"omitempty,ip4_addr|ip6_addr"`
+		//Metadata           any    `json:"metadata,omitempty" validate:"omitempty"`
+		//Airline            `json:"airline,omitempty" validate:"omitempty"`
+		//Transfers          `json:"transfers,omitempty" validate:"omitempty"`
+		//Deal               `json:"deal,omitempty" validate:"omitempty"`
+		//MerchantCustomerID string `json:"merchant_customer_id,omitempty" validate:"omitempty,max=200"`
+		//Receiver           `json:"receiver,omitempty" validate:"omitempty"`
 	}
 
 	// Receipt specifies data for the formation of the receipt. It is necessary to transmit in these cases: you are a company or sole proprietor and you use Checks from YUKASSA to pay in compliance with the requirements of Federal Law No. 54; you are a company or sole proprietor, for payment in compliance with the requirements of Federal Law No. 54, you use a third-party online sales register and send data for receipts according to one of the scenarios: Payment and receipt at the same time, or First the receipt, then the payment ; you are self-employed and use the UCassa solution for auto-sending checks.
@@ -353,10 +451,11 @@ type (
 	//
 	// Enforce: Request to make a payment with 3-D Secure authentication. It will work if you accept payment by bank card by default without confirmation of payment by the user. In all other cases, the 3-D Secure authentication will be managed by UCassa. If you want to accept payments without additional confirmation by the user, write to your UCassa manager.
 	Confirmation struct {
-		Type      ConfirmationType `json:"type" validate:"required"`
-		ReturnURL string           `json:"return_url,omitempty" validate:"required_if=Type redirect,required_if=Type mobile_application,omitempty,url"`
-		Locale    string           `json:"locale,omitempty" validate:"omitempty,oneof=ru_RU en_US"`
-		Enforce   bool             `json:"enforce,omitempty" validate:"omitempty"`
+		Type            ConfirmationType `json:"type" validate:"required"`
+		ReturnURL       string           `json:"return_url,omitempty" validate:"required_if=Type redirect,required_if=Type mobile_application,omitempty,url"`
+		ConfirmationURL string           `json:"confirmation_url,omitempty" validate:"required_if=Type redirect,omitempty,url"`
+		Locale          string           `json:"locale,omitempty" validate:"omitempty,oneof=ru_RU en_US"`
+		Enforce         bool             `json:"enforce,omitempty" validate:"omitempty"`
 	}
 
 	// VatData specifies data on value added tax (VAT). The payment may or may not be subject to VAT. Goods can be taxed at the same VAT rate or at different rates.
@@ -373,7 +472,7 @@ type (
 
 type VatDataType string
 
-var (
+const (
 	Untaxed    VatDataType = "untaxed"
 	Calculated VatDataType = "calculated"
 	Mixed      VatDataType = "mixed"
@@ -381,7 +480,7 @@ var (
 
 type ConfirmationType string
 
-var (
+const (
 	Embedded          ConfirmationType = "embedded"
 	External          ConfirmationType = "external"
 	MobileApplication ConfirmationType = "mobile_application"
@@ -391,13 +490,14 @@ var (
 
 type Currency string
 
-var (
+const (
 	RUB Currency = "RUB"
+	USD Currency = "USD"
 )
 
 type PaymentMethodType string
 
-var (
+const (
 	SberLoanType       PaymentMethodType = "sber_loan"
 	MobileBalanceType  PaymentMethodType = "mobile_balance"
 	BankCardType       PaymentMethodType = "bank_card"
@@ -450,10 +550,11 @@ type (
 	//
 	// IncomeAmount: The payment amount that the store will receive is the amount value minus the Yandex commission. If you are a partner and use an OAuth token to authenticate requests, ask the store for the right to receive information about commissions for payments.
 	PaymentRes struct {
-		ID                   string        `json:"id" validate:"required,len=36,uuid"`
-		Status               PaymentStatus `json:"status" validate:"required, oneof=pending waiting_for_capture succeeded canceled"`
-		Paid                 bool          `json:"paid" validate:"required"`
+		ID                   string            `json:"id" validate:"required,len=36,uuid"`
+		Status               TransactionStatus `json:"status" validate:"required, oneof=pending waiting_for_capture succeeded canceled"`
+		Paid                 bool              `json:"paid" validate:"required"`
 		Amount               `json:"amount" validate:"required"`
+		Confirmation         `json:"confirmation,omitempty" validate:"omitempty"`
 		AuthorizationDetails `json:"authorization_details" validate:"omitempty"`
 		CreatedAt            time.Time `json:"created_at" validate:"required,datetime"`
 		Description          string    `json:"description" validate:"omitempty,lte=128"`
@@ -600,13 +701,4 @@ type (
 		Account    string `json:"account,omitempty" validate:"omitempty,len=20"`
 		KPP        string `json:"kpp,omitempty" validate:"omitempty,len=9"`
 	}
-)
-
-type PaymentStatus string
-
-var (
-	Pending           PaymentStatus = "pending"
-	WaitingForCapture PaymentStatus = "waiting_for_capture"
-	Succeeded         PaymentStatus = "succeeded"
-	Canceled          PaymentStatus = "canceled"
 )

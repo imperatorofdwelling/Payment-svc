@@ -6,7 +6,6 @@ import (
 )
 
 type IPaymentRepo interface {
-	GetTest() string
 }
 
 type PaymentRepo struct {
@@ -19,8 +18,4 @@ func NewPaymentRepo(db *sql.DB, log *zap.SugaredLogger) *PaymentRepo {
 		db:  db,
 		log: log,
 	}
-}
-
-func (r *PaymentRepo) GetTest() string {
-	return "Hello"
 }

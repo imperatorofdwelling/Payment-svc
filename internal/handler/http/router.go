@@ -10,9 +10,8 @@ import (
 	"github.com/imperatorofdwelling/payment-svc/internal/storage"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/redis"
-	"github.com/rvinnie/yookassa-sdk-go/yookassa"
+	"github.com/imperatorofdwelling/payment-svc/pkg/yookassa"
 	"go.uber.org/zap"
-	"strconv"
 	"time"
 )
 
@@ -31,8 +30,9 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/api/v1", func(r chi.Router) {
-		yooclient := yookassa.NewClient(strconv.Itoa(cfg.ShopID), cfg.SecretKey)
-		yookassaHdl := yookassa.NewPaymentHandler(yooclient)
+
+		yooClient := yookassa.NewYookassaClient(cfg.PayApi)
+		yookassaHdl := yookassa.NewPaymentsHandler(yooClient, log.Named("yookassa_handler"))
 
 		htmx.NewHTMXHandler(r, log.Named("htmx_handler"))
 
