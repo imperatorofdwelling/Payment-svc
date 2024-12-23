@@ -77,7 +77,3 @@ func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) 
 
 	json.Write(w, http.StatusOK, newPayment)
 }
-
-func (h *paymentsHandler) ChangeStatus(w http.ResponseWriter, r *http.Request) {
-	const op = "handler.v1.payments.ChangeStatus"
-}

@@ -10,24 +10,25 @@ import (
 	"net/http"
 )
 
-type cardsHandler struct {
-	svc service.ICardsSvc
-	log *zap.SugaredLogger
+type payoutsHandler struct {
+	svc     service.IPayoutsSvc
+	cardSvc service.ICardsSvc
+	log     *zap.SugaredLogger
 }
 
-func NewCardsHandler(r chi.Router, svc service.ICardsSvc, log *zap.SugaredLogger) {
-	handler := &cardsHandler{svc: svc, log: log}
+func NewPayoutsHandler(r chi.Router, svc service.IPayoutsSvc, cardSvc service.ICardsSvc, log *zap.SugaredLogger) {
+	handler := &payoutsHandler{svc, cardSvc, log}
 
-	r.Route("/cards", func(r chi.Router) {
-		r.Group(func(r chi.Router) {
-			r.Post("/create", handler.CreateCard)
-			r.Delete("/{userId}", handler.DeleteCard)
+	r.Route("/payouts", func(r chi.Router) {
+		r.Route("/cards", func(r chi.Router) {
+			r.Post("/create", handler.createCard)
+			r.Delete("/{cardId}", handler.deleteCardByID)
 		})
 	})
 }
 
-func (h *cardsHandler) CreateCard(w http.ResponseWriter, r *http.Request) {
-	const op = "handler.cards.CreateCard"
+func (h *payoutsHandler) createCard(w http.ResponseWriter, r *http.Request) {
+	const op = "handler.v1.payouts.CreateCard"
 
 	var newCard model.Card
 
@@ -38,7 +39,7 @@ func (h *cardsHandler) CreateCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.svc.CreateBankCard(r.Context(), newCard)
+	err = h.cardSvc.CreateBankCard(r.Context(), newCard)
 	if err != nil {
 		h.log.Errorf("%s: %v", op, err)
 		json.WriteError(w, http.StatusInternalServerError, err.Error(), json.InternalApiError)
@@ -48,19 +49,19 @@ func (h *cardsHandler) CreateCard(w http.ResponseWriter, r *http.Request) {
 	json.Write(w, http.StatusCreated, newCard)
 }
 
-func (h *cardsHandler) DeleteCard(w http.ResponseWriter, r *http.Request) {
-	const op = "handler.cards.DeleteCard"
+func (h *payoutsHandler) deleteCardByID(w http.ResponseWriter, r *http.Request) {
+	const op = "handler.v1.payouts.DeleteCardByID"
 
-	userId := chi.URLParam(r, "userId")
+	userId := chi.URLParam(r, "cardId")
 
-	userIdUUID, err := uuid.Parse(userId)
+	cardIdUUID, err := uuid.Parse(userId)
 	if err != nil {
 		h.log.Errorf("%s: %v", op, err)
 		json.WriteError(w, http.StatusBadRequest, err.Error(), json.ParseError)
 		return
 	}
 
-	err = h.svc.DeleteCardByUserID(r.Context(), userIdUUID)
+	err = h.cardSvc.DeleteCardByID(r.Context(), cardIdUUID)
 	if err != nil {
 		h.log.Errorf("%s: %v", op, err)
 		json.WriteError(w, http.StatusInternalServerError, err.Error(), json.InternalApiError)

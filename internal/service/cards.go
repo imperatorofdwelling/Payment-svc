@@ -12,7 +12,7 @@ import (
 
 type ICardsSvc interface {
 	CreateBankCard(ctx context.Context, card model.Card) error
-	DeleteCardByUserID(ctx context.Context, userID uuid.UUID) error
+	DeleteCardByID(ctx context.Context, cardID uuid.UUID) error
 }
 
 type CardsSvc struct {
@@ -36,12 +36,7 @@ func (s *CardsSvc) CreateBankCard(ctx context.Context, card model.Card) error {
 		return fmt.Errorf("%s: %v", op, ErrCardAlreadyExists)
 	}
 
-	userIDUUID, err := uuid.Parse(card.UserId)
-	if err != nil {
-		return errors.Wrap(err, op)
-	}
-
-	userIDExists, err := s.repo.CheckCardExistsByUserID(ctx, userIDUUID)
+	userIDExists, err := s.repo.CheckCardExistsByID(ctx, card.ID)
 	if err != nil {
 		return errors.Wrap(err, op)
 	}
@@ -61,19 +56,19 @@ func (s *CardsSvc) CreateBankCard(ctx context.Context, card model.Card) error {
 	return nil
 }
 
-func (s *CardsSvc) DeleteCardByUserID(ctx context.Context, userID uuid.UUID) error {
-	const op = "service.cards.DeleteCardByUserID"
+func (s *CardsSvc) DeleteCardByID(ctx context.Context, cardID uuid.UUID) error {
+	const op = "service.cards.DeleteCardByID"
 
-	userIDExists, err := s.repo.CheckCardExistsByUserID(ctx, userID)
+	userIDExists, err := s.repo.CheckCardExistsByID(ctx, cardID)
 	if err != nil {
 		return errors.Wrap(err, op)
 	}
 
 	if !userIDExists {
-		return fmt.Errorf("card  with user id %v not found", userID)
+		return fmt.Errorf("card  with user id %v not found", cardID)
 	}
 
-	err = s.repo.DeleteCardByUserID(ctx, userID)
+	err = s.repo.DeleteCardByID(ctx, cardID)
 	if err != nil {
 		return errors.Wrap(err, op)
 	}

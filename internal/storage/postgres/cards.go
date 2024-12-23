@@ -14,8 +14,8 @@ type ICardsRepo interface {
 	CreateCard(context.Context, model.Card) error
 	UpdateCard(context.Context, model.Card) error
 	CardSynonymIsExists(ctx context.Context, synonym string) (bool, error)
-	CheckCardExistsByUserID(ctx context.Context, userID uuid.UUID) (bool, error)
-	DeleteCardByUserID(context.Context, uuid.UUID) error
+	CheckCardExistsByID(ctx context.Context, cardID uuid.UUID) (bool, error)
+	DeleteCardByID(context.Context, uuid.UUID) error
 }
 
 type CardsRepo struct {
@@ -86,10 +86,10 @@ func (r *CardsRepo) CardSynonymIsExists(ctx context.Context, synonym string) (bo
 	return true, nil
 }
 
-func (r *CardsRepo) CheckCardExistsByUserID(ctx context.Context, userID uuid.UUID) (bool, error) {
-	const op = "repo.postgres.card.CheckCardExistsByUserID"
+func (r *CardsRepo) CheckCardExistsByID(ctx context.Context, cardID uuid.UUID) (bool, error) {
+	const op = "repo.postgres.card.CheckCardExistsByID"
 
-	stmt, err := r.db.PrepareContext(ctx, "SELECT EXISTS(SELECT * FROM bank_cards WHERE user_id = $1)")
+	stmt, err := r.db.PrepareContext(ctx, "SELECT EXISTS(SELECT * FROM bank_cards WHERE id = $1)")
 	if err != nil {
 		return false, fmt.Errorf("%v: %v", op, err)
 	}
@@ -98,7 +98,7 @@ func (r *CardsRepo) CheckCardExistsByUserID(ctx context.Context, userID uuid.UUI
 
 	var exists bool
 
-	err = stmt.QueryRowContext(ctx, userID).Scan(&exists)
+	err = stmt.QueryRowContext(ctx, cardID).Scan(&exists)
 	if err == sql.ErrNoRows {
 		return false, nil
 	}
@@ -109,17 +109,17 @@ func (r *CardsRepo) CheckCardExistsByUserID(ctx context.Context, userID uuid.UUI
 	return exists, nil
 }
 
-func (r *CardsRepo) DeleteCardByUserID(ctx context.Context, userID uuid.UUID) error {
-	const op = "repo.postgres.card.DeleteCardByUserID"
+func (r *CardsRepo) DeleteCardByID(ctx context.Context, cardID uuid.UUID) error {
+	const op = "repo.postgres.card.DeleteCardByID"
 
-	stmt, err := r.db.PrepareContext(ctx, "DELETE FROM bank_cards WHERE user_id = $1")
+	stmt, err := r.db.PrepareContext(ctx, "DELETE FROM bank_cards WHERE id = $1")
 	if err != nil {
 		return fmt.Errorf("%v: %v", op, err)
 	}
 
 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, userID)
+	_, err = stmt.ExecContext(ctx, cardID)
 	if err != nil {
 		return fmt.Errorf("%v: %v", op, err)
 	}
