@@ -20,23 +20,16 @@ func NewPaymentsHandler(client *Client, log *zap.SugaredLogger) *PaymentsHandler
 	}
 }
 
-func (h *PaymentsHandler) CreatePayment(payment *model.Payment, idempotencyKey string) (*model.Payment, error) {
-	pJSON, err := json.MarshalIndent(payment, "", "\t")
+func (h *PaymentsHandler) CreatePayment(payment *model.Payment, idempotencyKey string) (*http.Response, error) {
+	pJSON, err := json.Marshal(payment)
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling payment json: %w", err)
 	}
 
-	res, err := h.makeRequest(http.MethodPost, PaymentEndpoint, pJSON, nil, idempotencyKey)
-	if err != nil {
-		return nil, fmt.Errorf("error making request: %w", err)
-	}
-
-	var yookassaPayment model.Payment
-
-	err = json.NewDecoder(res.Body).Decode(&yookassaPayment)
+	res, err := h.makeRequest(http.MethodPost, PaymentEndpoint, "", pJSON, nil, idempotencyKey)
 	if err != nil {
 		return nil, err
 	}
 
-	return &yookassaPayment, nil
+	return res, nil
 }

@@ -43,7 +43,7 @@ func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err := json.Read(r, &payment)
+	err := json.Read(r.Body, &payment)
 	if err != nil {
 		json.WriteError(w, http.StatusBadRequest, err.Error(), json.DecodeBodyError)
 		return
@@ -55,7 +55,16 @@ func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	newPayment, err := h.yookassaHdl.CreatePayment(&payment, idempotenceKey)
+	paymentRes, err := h.yookassaHdl.CreatePayment(&payment, idempotenceKey)
+	if err != nil {
+		h.log.Errorf("%s: %v", op, err.Error())
+		json.WriteError(w, http.StatusBadRequest, err.Error(), json.ExternalApiError)
+		return
+	}
+
+	var newPayment model.Payment
+
+	err = json.Read(paymentRes.Body, &newPayment)
 	if err != nil {
 		h.log.Errorf("%s: %v", op, err.Error())
 		json.WriteError(w, http.StatusBadRequest, err.Error(), json.ExternalApiError)
@@ -68,7 +77,7 @@ func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = h.svc.CreatePayment(r.Context(), newPayment)
+	err = h.svc.CreatePayment(r.Context(), &newPayment)
 	if err != nil {
 		h.log.Errorf("%s: %v", op, zap.Error(err))
 		json.WriteError(w, http.StatusInternalServerError, err.Error(), json.InternalApiError)

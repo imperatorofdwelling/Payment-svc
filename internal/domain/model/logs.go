@@ -8,7 +8,6 @@ import (
 type Log struct {
 	ID              uuid.UUID         `json:"id"`
 	TransactionID   uuid.UUID         `json:"transaction_id" validate:"required,uuid"`
-	MethodType      PaymentMethodType `json:"method_type" validate:"required"`
 	TransactionType TransactionType   `json:"transaction_type" validate:"required"`
 	Status          TransactionStatus `json:"status" validate:"required"`
 	Value           string            `json:"value" validate:"required,money"`

@@ -4,34 +4,40 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/imperatorofdwelling/payment-svc/internal/config"
 	"net/http"
 	"strconv"
 )
 
+const yookassaApiAddr = "https://api.yookassa.ru/v3"
+
+type YookassaEndpoint string
+
 const (
-	PaymentEndpoint = "payments"
-	CaptureEndpoint = "capture"
-	CancelEndpoint  = "cancel"
+	PaymentEndpoint YookassaEndpoint = "payments"
+	PayoutEndpoint  YookassaEndpoint = "payouts"
+	CaptureEndpoint YookassaEndpoint = "capture"
+	CancelEndpoint  YookassaEndpoint = "cancel"
 )
 
 type Client struct {
-	client      http.Client
-	cfgYookassa config.PayApi
+	client    http.Client
+	shopID    int
+	secretKey string
 }
 
-func NewYookassaClient(cfgPayApi config.PayApi) *Client {
+func NewYookassaClient(shopID int, secretKey string) *Client {
 	client := http.Client{
 		Transport: loggingRoundTripper{
 			proxied:   http.DefaultTransport,
-			shopID:    strconv.Itoa(cfgPayApi.ShopID),
-			secretKey: cfgPayApi.SecretKey,
+			shopID:    strconv.Itoa(shopID),
+			secretKey: secretKey,
 		},
 	}
 
 	return &Client{
 		client,
-		cfgPayApi,
+		shopID,
+		secretKey,
 	}
 }
 
@@ -58,12 +64,19 @@ func (lrt loggingRoundTripper) RoundTrip(req *http.Request) (res *http.Response,
 
 func (c *Client) makeRequest(
 	method string,
-	endpoint string,
+	endpoint YookassaEndpoint,
+	param string,
 	body []byte,
-	params map[string]interface{},
+	query map[string]interface{},
 	idempotencyKey string,
 ) (*http.Response, error) {
-	uri := fmt.Sprintf("%s/%s", c.cfgYookassa.Addr, endpoint)
+	var uri string
+
+	if param != "" {
+		uri = fmt.Sprintf("%s/%s", yookassaApiAddr, endpoint)
+	} else {
+		uri = fmt.Sprintf("%s/%s/%s", yookassaApiAddr, endpoint, param)
+	}
 
 	req, err := http.NewRequest(method, uri, bytes.NewBuffer(body))
 	if err != nil {
@@ -78,9 +91,9 @@ func (c *Client) makeRequest(
 		req.Header.Set("Idempotence-Key", idempotencyKey)
 	}
 
-	if params != nil {
+	if query != nil {
 		q := req.URL.Query()
-		for paramName, paramVal := range params {
+		for paramName, paramVal := range query {
 			q.Add(paramName, fmt.Sprintf("%v", paramVal))
 		}
 		req.URL.RawQuery = q.Encode()

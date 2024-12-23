@@ -2,6 +2,7 @@ package json
 
 import (
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 )
@@ -30,9 +31,9 @@ type Response struct {
 	Err  *ErrResponse `json:"error"`
 }
 
-func Read(r *http.Request, s any) error {
-	defer r.Body.Close()
-	return json.NewDecoder(r.Body).Decode(s)
+func Read(body io.ReadCloser, s any) error {
+	defer body.Close()
+	return json.NewDecoder(body).Decode(s)
 }
 
 func Write(w http.ResponseWriter, status http.ConnState, s any) {

@@ -10,7 +10,7 @@ import (
 )
 
 type ILogsSvc interface {
-	InsertLog(ctx context.Context, payment *model.Log) error
+	InsertLog(ctx context.Context, log *model.Log) error
 	UpdateLogStatus(ctx context.Context, payment *model.Notification) error
 }
 

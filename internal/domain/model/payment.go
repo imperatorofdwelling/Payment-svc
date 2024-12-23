@@ -623,12 +623,12 @@ type (
 		DiscountAmount   Amount            `json:"discount_amount,omitempty" validate:"omit_with=Type sber_loan"`
 		LoanOption       string            `json:"loan_option,omitempty" validate:"omit_with=Type sber_loan"`
 		Login            string            `json:"login,omitempty" validate:"omit_with=Type alfabank"`
-		BankCard         BankCardRes       `json:"card,omitempty" validate:"omit_with=Type bank_card,omitempty"`
+		BankCard         BankCardData      `json:"card,omitempty" validate:"omit_with=Type bank_card,omitempty"`
 		PayerBankDetails `json:"payer_bank_details,omitempty" validate:"omit_with=Type sbp|omit_with=Type b2b_sberbank,omitempty"`
 		SBPOperationID   string `json:"sbp_operation_id,omitempty" validate:"omit_with=Type sbp"`
 	}
 
-	// BankCardRes specifies bank card details.
+	// BankCardData specifies bank card details.
 	//
 	// First6: The first 6 numbers of the card (trash can). Please note that the card contained in cash registers and other vaults may not be responsible for the last 4 years, the expired year, the expired month.
 	//
@@ -645,7 +645,7 @@ type (
 	// IssuerCountry: The name of the bank that issued the card.
 	//
 	// Source: The source of the bank card data. Possible values: mir_pay, apple_pay, google_pay. It is assigned if the user selected a card saved in Mir Pay, Apple Pay or Google Pay when paying.
-	BankCardRes struct {
+	BankCardData struct {
 		First6        string `json:"first6,omitempty" validate:"omitempty,numeric,len=6"`
 		Last4         string `json:"last4" validate:"required,numeric,len=4"`
 		ExpiryYear    string `json:"expiry_year" validate:"required,numeric,len=4"`

@@ -28,7 +28,7 @@ func (h *logsHandler) changeStatus(w http.ResponseWriter, r *http.Request) {
 
 	var notification model.Notification
 
-	err := json.Read(r, &notification)
+	err := json.Read(r.Body, &notification)
 	if err != nil {
 		h.log.Error(op, zap.Error(err))
 		json.WriteError(w, http.StatusBadRequest, err.Error(), json.DecodeBodyError)

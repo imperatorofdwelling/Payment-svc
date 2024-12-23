@@ -20,7 +20,6 @@ type Config struct {
 type PayApi struct {
 	ShopID    int    `yaml:"shop_id" env-required:"true"`
 	SecretKey string `yaml:"secret_key" env-required:"true"`
-	Addr      string `yaml:"addr" env-required:"true"`
 }
 
 type Server struct {

@@ -37,7 +37,6 @@ func (s *PaymentSvc) CreatePayment(ctx context.Context, payment *model.Payment) 
 
 	newLog := &model.Log{
 		TransactionID:   idUUID,
-		MethodType:      payment.PaymentMethodData.Type,
 		TransactionType: model.PaymentType,
 		Status:          payment.Status,
 		Value:           payment.Amount.Value,
