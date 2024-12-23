@@ -451,11 +451,12 @@ type (
 	//
 	// Enforce: Request to make a payment with 3-D Secure authentication. It will work if you accept payment by bank card by default without confirmation of payment by the user. In all other cases, the 3-D Secure authentication will be managed by UCassa. If you want to accept payments without additional confirmation by the user, write to your UCassa manager.
 	Confirmation struct {
-		Type            ConfirmationType `json:"type" validate:"required"`
-		ReturnURL       string           `json:"return_url,omitempty" validate:"required_if=Type redirect,required_if=Type mobile_application,omitempty,url"`
-		ConfirmationURL string           `json:"confirmation_url,omitempty" validate:"omitempty,required_if=Type redirect,omitempty,url"`
-		Locale          string           `json:"locale,omitempty" validate:"omitempty,oneof=ru_RU en_US"`
-		Enforce         bool             `json:"enforce,omitempty" validate:"omitempty"`
+		Type              ConfirmationType `json:"type" validate:"required"`
+		ReturnURL         string           `json:"return_url,omitempty" validate:"required_if=Type redirect,required_if=Type mobile_application,omitempty,url"`
+		ConfirmationURL   string           `json:"confirmation_url,omitempty" validate:"omitempty,required_if=Type redirect,omitempty,url"`
+		ConfirmationToken string           `json:"confirmation_token,omitempty" validate:"omitempty,required_if=Type embedded"`
+		Locale            string           `json:"locale,omitempty" validate:"omitempty,oneof=ru_RU en_US"`
+		Enforce           bool             `json:"enforce,omitempty" validate:"omitempty"`
 	}
 
 	// VatData specifies data on value added tax (VAT). The payment may or may not be subject to VAT. Goods can be taxed at the same VAT rate or at different rates.
