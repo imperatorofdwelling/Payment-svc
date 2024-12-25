@@ -10,9 +10,9 @@ import (
 )
 
 type ITransactionRepo interface {
-	Commit() error
-	UpdateStatus() error
-	GetStatus() error
+	Commit(id uuid.UUID, status model.TransactionStatus) error
+	UpdateStatus(id uuid.UUID, status model.TransactionStatus) error
+	GetStatus(id uuid.UUID) (model.TransactionStatus, error)
 	IsExists(id uuid.UUID) (bool, error)
 }
 
@@ -23,8 +23,8 @@ var (
 )
 
 const (
-	TransactionTable = "transactionTable"
-	expiration       = time.Minute * 24 * 60
+	TransactionTable = "transactions"
+	Expiration       = time.Hour
 )
 
 type TransactionRepo struct {
@@ -48,7 +48,7 @@ func (r *TransactionRepo) Commit(id uuid.UUID, status model.TransactionStatus) e
 	}
 
 	pipe := r.rdb.TxPipeline()
-	pipe.Set(ctx, r.getKey(id), status, expiration)
+	pipe.Set(ctx, r.getKey(id), status, Expiration)
 	_, err = pipe.Exec(ctx)
 
 	return err
@@ -71,12 +71,14 @@ func (r *TransactionRepo) UpdateStatus(id uuid.UUID, status model.TransactionSta
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	duration := time.Since(time.Unix(int64(ttl), 0))
-
-	pipe := r.rdb.TxPipeline()
-	pipe.Set(ctx, r.getKey(id), status, duration)
-	_, err = pipe.Exec(ctx)
-	return err
+	if ttl > 0 {
+		pipe := r.rdb.TxPipeline()
+		pipe.Set(ctx, r.getKey(id), status, ttl)
+		_, err = pipe.Exec(ctx)
+		return err
+	} else {
+		return fmt.Errorf("%s: %w", op, ErrTransactionNotFound)
+	}
 }
 
 func (r *TransactionRepo) GetStatus(id uuid.UUID) (model.TransactionStatus, error) {

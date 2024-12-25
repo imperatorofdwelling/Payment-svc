@@ -17,12 +17,11 @@ type payoutsHandler struct {
 	svc               service.IPayoutsSvc
 	cardSvc           service.ICardsSvc
 	yookassaPayoutHdl *yookassa.PayoutsHandler
-	logsSvc           service.ILogsSvc
 	log               *zap.SugaredLogger
 }
 
-func NewPayoutsHandler(r chi.Router, svc service.IPayoutsSvc, cardSvc service.ICardsSvc, yookassaPayoutHdl *yookassa.PayoutsHandler, logsSvc service.ILogsSvc, log *zap.SugaredLogger) {
-	handler := &payoutsHandler{svc, cardSvc, yookassaPayoutHdl, logsSvc, log}
+func NewPayoutsHandler(r chi.Router, svc service.IPayoutsSvc, cardSvc service.ICardsSvc, yookassaPayoutHdl *yookassa.PayoutsHandler, log *zap.SugaredLogger) {
+	handler := &payoutsHandler{svc, cardSvc, yookassaPayoutHdl, log}
 
 	r.Route("/payouts", func(r chi.Router) {
 		r.Route("/cards", func(r chi.Router) {
@@ -145,15 +144,7 @@ func (h *payoutsHandler) newPayout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newLog := &model.Log{
-		TransactionID:   createdPayout.ID,
-		TransactionType: model.PayoutType,
-		Status:          *createdPayout.Status,
-		Value:           createdPayout.Amount.Value,
-		Currency:        createdPayout.Amount.Currency,
-	}
-
-	err = h.logsSvc.InsertLog(r.Context(), newLog)
+	err = h.svc.CreatePayout(r.Context(), newPayout)
 	if err != nil {
 		h.log.Errorf("%s: %v", op, err)
 		json.WriteError(w, http.StatusInternalServerError, err.Error(), json.InternalApiError)

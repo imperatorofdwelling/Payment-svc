@@ -11,7 +11,7 @@ import (
 
 type ILogsSvc interface {
 	InsertLog(ctx context.Context, log *model.Log) error
-	UpdateLogStatus(ctx context.Context, payment *model.Notification) error
+	UpdateLogTransactionStatus(ctx context.Context, transactionId uuid.UUID, status model.TransactionStatus) error
 }
 
 type LogsSvc struct {
@@ -34,15 +34,10 @@ func (s *LogsSvc) InsertLog(ctx context.Context, log *model.Log) error {
 	return nil
 }
 
-func (s *LogsSvc) UpdateLogStatus(ctx context.Context, notification *model.Notification) error {
+func (s *LogsSvc) UpdateLogTransactionStatus(ctx context.Context, transactionId uuid.UUID, status model.TransactionStatus) error {
 	const op = "service.logs.UpdateLogStatus"
 
-	notificationUUID, err := uuid.Parse(notification.Object.ID)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	err = s.repo.UpdateLogStatus(ctx, notificationUUID, notification.Object.Status)
+	err := s.repo.UpdateLogStatus(ctx, transactionId, status)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
