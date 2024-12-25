@@ -44,7 +44,7 @@ func (r *LogsRepo) InsertLog(ctx context.Context, p *model.Log) error {
 		return nil
 	}
 
-	stmtPayment, err := tx.PrepareContext(ctx, "INSERT INTO logs(transaction_id, transaction_type, status, value, currency, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)")
+	stmtPayment, err := tx.PrepareContext(ctx, "INSERT INTO logs(transaction_id, transaction_type, status, value, currency, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)")
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}

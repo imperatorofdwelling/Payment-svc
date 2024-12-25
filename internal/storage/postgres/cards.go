@@ -30,14 +30,14 @@ func NewCardsRepo(db *sql.DB, log *zap.SugaredLogger) *CardsRepo {
 func (r *CardsRepo) CreateCard(ctx context.Context, card model.Card) error {
 	const op = "repo.postgres.card.CreateCard"
 
-	stmt, err := r.db.PrepareContext(ctx, "INSERT INTO bank_cards(user_id, bank_name, country_code, synonim, card_mask, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)")
+	stmt, err := r.db.PrepareContext(ctx, "INSERT INTO bank_cards(user_id, card_type, first6, last4, issuer_country, issuer_name, payout_token, updated_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)")
 	if err != nil {
 		return fmt.Errorf("%v: %v", op, err)
 	}
 
 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, card.UserId, card.BankName, card.CountryCode, card.Synonim, card.CardMask, card.Type, time.Now(), time.Now())
+	_, err = stmt.ExecContext(ctx, card.UserId, card.CardType, card.First6, card.Last4, card.IssuerCountry, card.IssuerName, card.PayoutToken, time.Now(), time.Now())
 	if err != nil {
 		return fmt.Errorf("%v: %v", op, err)
 	}
@@ -48,14 +48,14 @@ func (r *CardsRepo) CreateCard(ctx context.Context, card model.Card) error {
 func (r *CardsRepo) UpdateCard(ctx context.Context, card model.Card) error {
 	const op = "repo.postgres.card.UpdateCard"
 
-	stmt, err := r.db.PrepareContext(ctx, "UPDATE bank_cards SET bank_name=$1, country_code=$2, synonim=$3, card_mask=$4, type=$5, updated_at=$6 WHERE user_id=$7")
+	stmt, err := r.db.PrepareContext(ctx, "UPDATE bank_cards SET card_type=$1, first6=$2, last4=$3, issuer_country=$4, issuer_name=$5, payout_token=$6, updated_at=$6 WHERE user_id=$7")
 	if err != nil {
 		return fmt.Errorf("%v: %v", op, err)
 	}
 
 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, card.BankName, card.CountryCode, card.Synonim, card.CardMask, card.Type, time.Now(), card.UserId)
+	_, err = stmt.ExecContext(ctx, card.CardType, card.First6, card.Last4, card.IssuerCountry, card.IssuerName, card.PayoutToken, time.Now(), card.UserId)
 	if err != nil {
 		return fmt.Errorf("%v: %v", op, err)
 	}
@@ -63,19 +63,19 @@ func (r *CardsRepo) UpdateCard(ctx context.Context, card model.Card) error {
 	return nil
 }
 
-func (r *CardsRepo) CardSynonymIsExists(ctx context.Context, synonym string) (bool, error) {
+func (r *CardsRepo) CardSynonymIsExists(ctx context.Context, token string) (bool, error) {
 	const op = "repo.postgres.card.CardSynonymIsExists"
 
-	stmt, err := r.db.PrepareContext(ctx, "SELECT * FROM bank_cards WHERE synonim = $1 LIMIT 1")
+	stmt, err := r.db.PrepareContext(ctx, "SELECT * FROM bank_cards WHERE payout_token = $1 LIMIT 1")
 	if err != nil {
 		return false, fmt.Errorf("%v: %v", op, err)
 	}
 
 	defer stmt.Close()
 
-	var synonymID string
+	var payoutToken string
 
-	err = stmt.QueryRowContext(ctx, synonym).Scan(&synonymID)
+	err = stmt.QueryRowContext(ctx, token).Scan(&payoutToken)
 	if err == sql.ErrNoRows {
 		return false, nil
 	}

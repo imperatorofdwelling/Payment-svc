@@ -144,6 +144,12 @@ func (h *payoutsHandler) newPayout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if createdPayout.ID == uuid.Nil {
+		h.log.Errorf("%s: %s", op, "invalid response from external api")
+		json.WriteError(w, http.StatusInternalServerError, "invalid response from external api", json.ExternalApiError)
+		return
+	}
+
 	err = h.svc.CreatePayout(r.Context(), newPayout)
 	if err != nil {
 		h.log.Errorf("%s: %v", op, err)
@@ -151,5 +157,5 @@ func (h *payoutsHandler) newPayout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.Write(w, http.StatusOK, newPayout)
+	json.Write(w, http.StatusOK, payoutRes.Body)
 }

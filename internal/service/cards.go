@@ -27,7 +27,7 @@ func NewCardsService(repo postgres.ICardsRepo, log *zap.SugaredLogger) *CardsSvc
 func (s *CardsSvc) CreateBankCard(ctx context.Context, card model.Card) error {
 	const op = "service.cards.CreateCard"
 
-	isExists, err := s.repo.CardSynonymIsExists(ctx, card.Synonim)
+	isExists, err := s.repo.CardSynonymIsExists(ctx, card.PayoutToken)
 	if err != nil {
 		return errors.Wrap(err, op)
 	}

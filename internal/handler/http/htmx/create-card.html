@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@2.0.0"></script>
-    <script src="https://static.yoomoney.ru/payouts-data-widget-front/widget.js"></script>
+    <script src="https://yookassa.ru/payouts-data/3.1.0/widget.js"></script>
     <style>
         .htmx-indicator{
             opacity:0;
@@ -33,16 +33,19 @@
     const redirectURL = "{{ .Data.Redirect }}"
 
     const payoutsData = new window.PayoutsData({
-        successCallback(data) {
+        type: 'payout',
+        account_id: '994351', //Идентификатор шлюза (agentId в личном кабинете)
+        success_callback: function(data) {
             const bodyPayload = {
-                user_id: userId,
-                bank_name: data.bankName,
-                synonim: data.synonim,
-                card_mask: data.panmask,
-                country_code: data.countryCode,
-                type: data.type
-
+                    user_id: userId,
+                    payout_token: data.payout_token,
+                    first6: data.first6,
+                    last4: data.last4,
+                    issuer_country: data.issuer_country,
+                    card_type: data.card_type,
+                    issuer_name: data.issuer_name
             }
+
             fetch("/api/v1/payouts/cards/create", {
                 method: 'POST',
                 headers: {
@@ -59,7 +62,7 @@
                 .then(() => window.location.href = redirectURL)
                 .catch(error => console.error(error))
         },
-        errorCallback(error) {
+        error_callback: function(error) {
             console.log(error)
         }
     });
@@ -73,3 +76,80 @@
 </script>
 </body>
 </html>
+
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">-->
+<!--    <title>Получение данных банковской карты продавца с помощью виджета ЮKassa</title>-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <script src="https://cdn.tailwindcss.com"></script>-->
+<!--    <script src="https://unpkg.com/htmx.org@2.0.0"></script>-->
+<!--    <script src="https://static.yoomoney.ru/payouts-data-widget-front/widget.js"></script>-->
+<!--    <style>-->
+<!--        .htmx-indicator{-->
+<!--            opacity:0;-->
+<!--            transition: opacity 10ms ease-in;-->
+<!--        }-->
+<!--        .htmx-request .htmx-indicator{-->
+<!--            opacity:1-->
+<!--        }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body class="bg-gray-200 p-10">-->
+<!--<div class="max-w-xl mx-auto">-->
+<!--    <h1 class="text-3xl mb-5 flex justify-center text-center"><span>{{ .Data.Text }}</span></h1>-->
+<!--    <div id="payout-form"></div>-->
+<!--    <div>-->
+<!--        <div class="my-2 htmx-indicator" >Loading...</div>-->
+<!--        <div id="results" class="flex justify-center"></div>-->
+<!--    </div>-->
+<!--</div>-->
+<!--<script>-->
+<!--    const userId = "{{ .Data.UserID }}"-->
+<!--    const redirectURL = "{{ .Data.Redirect }}"-->
+
+<!--    const payoutsData = new window.PayoutsData({-->
+<!--        successCallback(data) {-->
+<!--            const bodyPayload = {-->
+<!--                user_id: userId,-->
+<!--                bank_name: data.bankName,-->
+<!--                synonim: data.synonim,-->
+<!--                card_mask: data.panmask,-->
+<!--                country_code: data.countryCode,-->
+<!--                type: data.type-->
+
+<!--            }-->
+<!--            fetch("/api/v1/payouts/cards/create", {-->
+<!--                method: 'POST',-->
+<!--                headers: {-->
+<!--                    'Content-Type': 'application/json',-->
+<!--                },-->
+<!--                body: JSON.stringify(bodyPayload)-->
+<!--            })-->
+<!--                .then(response => {-->
+<!--                    if (!response.ok) {-->
+<!--                        throw new Error()-->
+<!--                    }-->
+<!--                    return response.json();-->
+<!--                })-->
+<!--                .then(() => window.location.href = redirectURL)-->
+<!--                .catch(error => console.error(error))-->
+<!--        },-->
+<!--        errorCallback(error) {-->
+<!--            console.log(error)-->
+<!--        }-->
+<!--    });-->
+
+<!--    //Отображение платежной формы в контейнере-->
+<!--    payoutsData.render('payout-form')-->
+<!--        //После отображения платежной формы метод render возвращает Promise (можно не использовать).-->
+<!--        .then(() => {-->
+<!--            //Код, который нужно выполнить после отображения платежной формы.-->
+<!--        });-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->

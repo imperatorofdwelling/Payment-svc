@@ -28,7 +28,7 @@ func (s *PayoutsSvc) CreatePayout(ctx context.Context, payout model.Payout) erro
 	newLog := &model.Log{
 		TransactionID:   payout.ID,
 		TransactionType: model.PayoutType,
-		Status:          *payout.Status,
+		Status:          model.Pending,
 		Value:           payout.Amount.Value,
 		Currency:        payout.Amount.Currency,
 	}
@@ -38,10 +38,11 @@ func (s *PayoutsSvc) CreatePayout(ctx context.Context, payout model.Payout) erro
 		return err
 	}
 
-	err = s.payoutSubscriber.Subscribe(payout.ID, *payout.Status)
-	if err != nil {
-		return err
-	}
+	// TODO fix errors in Subscriber
+	//err = s.payoutSubscriber.Subscribe(payout.ID, *payout.Status)
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }
