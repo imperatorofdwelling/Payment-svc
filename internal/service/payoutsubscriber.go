@@ -3,17 +3,17 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/redis"
 	"github.com/imperatorofdwelling/payment-svc/pkg/json"
 	"github.com/imperatorofdwelling/payment-svc/pkg/yookassa"
+	"github.com/pkg/errors"
 	"math"
 	"time"
 )
 
 type IPayoutSubscriber interface {
-	Subscribe(payoutID uuid.UUID, status model.TransactionStatus) error
+	Subscribe(payoutID string, status model.TransactionStatus) error
 }
 
 type PayoutSubscriber struct {
@@ -26,24 +26,34 @@ func NewPayoutSubscriber(rdbTransaction redis.ITransactionRepo, logsSvc ILogsSvc
 	return &PayoutSubscriber{rdbTransaction, logsSvc, yookassaPayoutsHdl}
 }
 
-func (s *PayoutSubscriber) Subscribe(payoutID uuid.UUID, status model.TransactionStatus) error {
-	const op = "subscribers.payout.Subscribe"
+func (s *PayoutSubscriber) Subscribe(payoutID string, status model.TransactionStatus) error {
+	const op = "service.payout.Subscribe"
 	if status == model.Succeeded || status == model.Canceled {
-		return fmt.Errorf("%s: %v", op, ErrNoNeedToCheck)
+		return nil
 	}
 
-	err := s.rdbTransaction.Commit(payoutID, status)
+	isExists, err := s.rdbTransaction.IsExists(payoutID)
+	if err != nil {
+		return errors.Wrap(err, op)
+	}
+
+	if isExists {
+		return nil
+	}
+
+	err = s.rdbTransaction.Commit(payoutID, status)
 	if err != nil {
 		return fmt.Errorf("%s: %v", op, err)
 	}
 
+	// TODO fix errors in updater
 	go s.runUpdater(payoutID)
 
 	return nil
 }
 
-func (s *PayoutSubscriber) runUpdater(payoutID uuid.UUID) error {
-	const op = "subscribers.payout.runUpdater"
+func (s *PayoutSubscriber) runUpdater(payoutID string) error {
+	const op = "service.payout.runUpdater"
 
 	ch := make(chan struct{}, 1)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -52,9 +62,10 @@ func (s *PayoutSubscriber) runUpdater(payoutID uuid.UUID) error {
 	go signaller(ch, ctx)
 
 	for range ch {
+		fmt.Println("TICK")
 		var payout model.Payout
 
-		res, err := s.yookassaPayoutsHdl.GetPayoutInfo(payoutID.String())
+		res, err := s.yookassaPayoutsHdl.GetPayoutInfo(payoutID)
 		if err != nil {
 			return fmt.Errorf("%s: %v", op, err)
 		}

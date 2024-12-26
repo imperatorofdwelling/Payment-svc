@@ -38,11 +38,10 @@ func (s *PayoutsSvc) CreatePayout(ctx context.Context, payout model.Payout) erro
 		return err
 	}
 
-	// TODO fix errors in Subscriber
-	//err = s.payoutSubscriber.Subscribe(payout.ID, *payout.Status)
-	//if err != nil {
-	//	return err
-	//}
+	err = s.payoutSubscriber.Subscribe(payout.ID, *payout.Status)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

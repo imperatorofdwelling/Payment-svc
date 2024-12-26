@@ -3,17 +3,16 @@ package redis
 import (
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
 
 type ITransactionRepo interface {
-	Commit(id uuid.UUID, status model.TransactionStatus) error
-	UpdateStatus(id uuid.UUID, status model.TransactionStatus) error
-	GetStatus(id uuid.UUID) (model.TransactionStatus, error)
-	IsExists(id uuid.UUID) (bool, error)
+	Commit(id string, status model.TransactionStatus) error
+	UpdateStatus(id string, status model.TransactionStatus) error
+	GetStatus(id string) (model.TransactionStatus, error)
+	IsExists(id string) (bool, error)
 }
 
 var (
@@ -35,7 +34,7 @@ func NewTransactionRepo(rdb *redis.Client) *TransactionRepo {
 	return &TransactionRepo{rdb: rdb}
 }
 
-func (r *TransactionRepo) Commit(id uuid.UUID, status model.TransactionStatus) error {
+func (r *TransactionRepo) Commit(id string, status model.TransactionStatus) error {
 	const op = "redis.transaction.Commit"
 
 	exists, err := r.IsExists(id)
@@ -48,13 +47,13 @@ func (r *TransactionRepo) Commit(id uuid.UUID, status model.TransactionStatus) e
 	}
 
 	pipe := r.rdb.TxPipeline()
-	pipe.Set(ctx, r.getKey(id), status, Expiration)
+	pipe.Set(ctx, r.getKey(id), string(status), Expiration)
 	_, err = pipe.Exec(ctx)
 
 	return err
 }
 
-func (r *TransactionRepo) UpdateStatus(id uuid.UUID, status model.TransactionStatus) error {
+func (r *TransactionRepo) UpdateStatus(id string, status model.TransactionStatus) error {
 	const op = "redis.transaction.UpdateStatus"
 
 	exists, err := r.IsExists(id)
@@ -81,7 +80,7 @@ func (r *TransactionRepo) UpdateStatus(id uuid.UUID, status model.TransactionSta
 	}
 }
 
-func (r *TransactionRepo) GetStatus(id uuid.UUID) (model.TransactionStatus, error) {
+func (r *TransactionRepo) GetStatus(id string) (model.TransactionStatus, error) {
 	const op = "redis.transaction.GetStatus"
 
 	exists, err := r.IsExists(id)
@@ -118,7 +117,7 @@ func (r *TransactionRepo) GetStatus(id uuid.UUID) (model.TransactionStatus, erro
 	return transactionStatus, nil
 }
 
-func (r *TransactionRepo) IsExists(id uuid.UUID) (bool, error) {
+func (r *TransactionRepo) IsExists(id string) (bool, error) {
 	const op = "redis.transaction.IsExists"
 
 	val, err := r.rdb.Exists(ctx, r.getKey(id)).Result()
@@ -129,10 +128,10 @@ func (r *TransactionRepo) IsExists(id uuid.UUID) (bool, error) {
 	return val == 1, nil
 }
 
-func (r *TransactionRepo) getKey(id uuid.UUID) string {
-	return TransactionTable + ":" + id.String()
+func (r *TransactionRepo) getKey(id string) string {
+	return TransactionTable + ":" + id
 }
 
-func (r *TransactionRepo) delKey(id uuid.UUID) error {
+func (r *TransactionRepo) delKey(id string) error {
 	return r.rdb.Del(ctx, r.getKey(id)).Err()
 }
