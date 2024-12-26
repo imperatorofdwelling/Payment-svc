@@ -2,7 +2,6 @@ package v1
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"github.com/imperatorofdwelling/payment-svc/pkg/json"
@@ -36,14 +35,7 @@ func (h *logsHandler) changeStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idUUID, err := uuid.Parse(notification.Object.ID)
-	if err != nil {
-		h.log.Error(op, zap.Error(err))
-		json.WriteError(w, http.StatusBadRequest, err.Error(), json.ParseError)
-		return
-	}
-
-	err = h.svc.UpdateLogTransactionStatus(r.Context(), idUUID, notification.Object.Status)
+	err = h.svc.UpdateLogTransactionStatus(r.Context(), notification.Object.ID, notification.Object.Status)
 	if err != nil {
 		h.log.Error(op, zap.Error(err))
 		json.WriteError(w, http.StatusInternalServerError, err.Error(), json.DecodeBodyError)

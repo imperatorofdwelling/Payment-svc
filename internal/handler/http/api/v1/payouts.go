@@ -29,7 +29,7 @@ func NewPayoutsHandler(r chi.Router, svc service.IPayoutsSvc, cardSvc service.IC
 			r.Delete("/{cardId}", handler.deleteCardByID)
 		})
 
-		r.Post("/new", handler.newPayout)
+		r.Post("/new", handler.makePayout)
 		r.Get("/{payoutId}", handler.getPayoutInfo)
 	})
 }
@@ -103,8 +103,8 @@ func (h *payoutsHandler) getPayoutInfo(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *payoutsHandler) newPayout(w http.ResponseWriter, r *http.Request) {
-	const op = "handler.v1.payouts.newPayout"
+func (h *payoutsHandler) makePayout(w http.ResponseWriter, r *http.Request) {
+	const op = "handler.v1.payouts.makePayout"
 
 	idempotenceKey := r.Header.Get("Idempotence-Key")
 	if idempotenceKey == "" {
@@ -144,18 +144,18 @@ func (h *payoutsHandler) newPayout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if createdPayout.ID == uuid.Nil {
+	if createdPayout.ID == "" {
 		h.log.Errorf("%s: %s", op, "invalid response from external api")
 		json.WriteError(w, http.StatusInternalServerError, "invalid response from external api", json.ExternalApiError)
 		return
 	}
 
-	err = h.svc.CreatePayout(r.Context(), newPayout)
+	err = h.svc.CreatePayout(r.Context(), createdPayout)
 	if err != nil {
 		h.log.Errorf("%s: %v", op, err)
 		json.WriteError(w, http.StatusInternalServerError, err.Error(), json.InternalApiError)
 		return
 	}
 
-	json.Write(w, http.StatusOK, payoutRes.Body)
+	json.Write(w, http.StatusOK, createdPayout)
 }

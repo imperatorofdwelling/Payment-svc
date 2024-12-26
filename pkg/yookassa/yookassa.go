@@ -3,7 +3,6 @@ package yookassa
 import (
 	"bytes"
 	"fmt"
-	"github.com/google/uuid"
 	"net/http"
 	"strconv"
 )
@@ -20,36 +19,39 @@ const (
 )
 
 type Client struct {
-	client    http.Client
-	shopID    int
-	secretKey string
+	client          http.Client
+	shopID          int
+	secretKey       string
+	payoutAgentID   int
+	payoutSecretKey string
 }
 
-func NewYookassaClient(shopID int, secretKey string) *Client {
-	client := http.Client{
-		Transport: loggingRoundTripper{
-			proxied:   http.DefaultTransport,
-			shopID:    strconv.Itoa(shopID),
-			secretKey: secretKey,
-		},
-	}
+func NewYookassaClient(shopID int, secretKey string, payoutAgentID int, payoutSecretKey string) *Client {
+	client := http.Client{}
 
 	return &Client{
 		client,
 		shopID,
 		secretKey,
+		payoutAgentID,
+		payoutSecretKey,
 	}
 }
 
-type loggingRoundTripper struct {
-	proxied   http.RoundTripper
-	shopID    string
-	secretKey string
+type customRoundTripper struct {
+	proxied        http.RoundTripper
+	username       string
+	password       string
+	idempotencyKey string
 }
 
-func (lrt loggingRoundTripper) RoundTrip(req *http.Request) (res *http.Response, e error) {
+func (lrt customRoundTripper) RoundTrip(req *http.Request) (res *http.Response, e error) {
 	req.Header.Set("Content-Type", "application/json")
-	req.SetBasicAuth(lrt.shopID, lrt.secretKey)
+	if req.Method == http.MethodPost || req.Method == http.MethodDelete {
+		req.Header.Set("Idempotence-Key", lrt.idempotencyKey)
+	}
+
+	req.SetBasicAuth(lrt.username, lrt.password)
 
 	res, e = lrt.proxied.RoundTrip(req)
 
@@ -83,14 +85,6 @@ func (c *Client) makeRequest(
 		return nil, err
 	}
 
-	if idempotencyKey == "" {
-		idempotencyKey = uuid.NewString()
-	}
-
-	if method == http.MethodPost || method == http.MethodDelete {
-		req.Header.Set("Idempotence-Key", idempotencyKey)
-	}
-
 	if query != nil {
 		q := req.URL.Query()
 		for paramName, paramVal := range query {
@@ -98,6 +92,21 @@ func (c *Client) makeRequest(
 		}
 		req.URL.RawQuery = q.Encode()
 	}
+
+	customTripper := customRoundTripper{
+		proxied:        http.DefaultTransport,
+		idempotencyKey: idempotencyKey,
+	}
+
+	if endpoint == PaymentEndpoint {
+		customTripper.username = strconv.Itoa(c.shopID)
+		customTripper.password = c.secretKey
+	} else if endpoint == PayoutEndpoint {
+		customTripper.username = strconv.Itoa(c.payoutAgentID)
+		customTripper.password = c.payoutSecretKey
+	}
+
+	c.client.Transport = customTripper
 
 	resp, err := c.client.Do(req)
 	if err != nil {

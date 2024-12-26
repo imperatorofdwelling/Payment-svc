@@ -1,7 +1,6 @@
 package model
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
@@ -22,7 +21,7 @@ type (
 	//
 	// Test: Indicates a test operation.
 	Payout struct {
-		ID                uuid.UUID `json:"id,omitempty" validate:"omitempty,uuid"`
+		ID                string `json:"id,omitempty"`
 		Amount            `json:"amount"`
 		PayoutToken       string             `json:"payout_token,omitempty"`
 		Description       string             `json:"description,omitempty"`

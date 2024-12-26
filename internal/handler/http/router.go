@@ -33,7 +33,7 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 
 		rdbTransactionsRepo := redis.NewTransactionRepo(s.Redis)
 
-		yooClient := yookassa.NewYookassaClient(cfg.PayApi.ShopID, cfg.PayApi.SecretKey)
+		yooClient := yookassa.NewYookassaClient(cfg.PayApi.ShopID, cfg.PayApi.SecretKey, cfg.PayApi.PayoutAgentID, cfg.PayApi.PayoutSecretKey)
 		yookassaPaymentsHdl := yookassa.NewPaymentsHandler(yooClient, log.Named("yookassa_handler"))
 		yookassaPayoutsHdl := yookassa.NewPayoutsHandler(yooClient, log.Named("yookassa_handler"))
 

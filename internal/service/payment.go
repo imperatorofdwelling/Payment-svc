@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
 	"go.uber.org/zap"
@@ -30,20 +29,15 @@ func NewPaymentSvc(repo postgres.IPaymentRepo, logsSvc ILogsSvc, log *zap.Sugare
 func (s *PaymentSvc) CreatePayment(ctx context.Context, payment *model.Payment) error {
 	const op = "service.payments.CreatePayment"
 
-	idUUID, err := uuid.Parse(payment.ID)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
 	newLog := &model.Log{
-		TransactionID:   idUUID,
+		TransactionID:   payment.ID,
 		TransactionType: model.PaymentType,
 		Status:          payment.Status,
 		Value:           payment.Amount.Value,
 		Currency:        payment.Amount.Currency,
 	}
 
-	err = s.logsSvc.InsertLog(ctx, newLog)
+	err := s.logsSvc.InsertLog(ctx, newLog)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}

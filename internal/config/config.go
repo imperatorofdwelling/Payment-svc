@@ -18,8 +18,10 @@ type Config struct {
 }
 
 type PayApi struct {
-	ShopID    int    `yaml:"shop_id" env-required:"true"`
-	SecretKey string `yaml:"secret_key" env-required:"true"`
+	ShopID          int    `yaml:"shop_id" env-required:"true"`
+	SecretKey       string `yaml:"secret_key" env-required:"true"`
+	PayoutAgentID   int    `yaml:"payout_agent_id" env-required:"true"`
+	PayoutSecretKey string `yaml:"payout_secret_key" env-required:"true"`
 }
 
 type Server struct {

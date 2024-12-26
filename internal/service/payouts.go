@@ -28,7 +28,7 @@ func (s *PayoutsSvc) CreatePayout(ctx context.Context, payout model.Payout) erro
 	newLog := &model.Log{
 		TransactionID:   payout.ID,
 		TransactionType: model.PayoutType,
-		Status:          model.Pending,
+		Status:          *payout.Status,
 		Value:           payout.Amount.Value,
 		Currency:        payout.Amount.Currency,
 	}

@@ -20,3 +20,5 @@ db:
 pay_api:
   shop_id: 994351
   secret_key: "test_MheegEXjJUlromDARVVTdiZrsGAB_8YBbgv17erGQ0A"
+  payout_agent_id: 507516
+  payout_secret_key: "test_*gQHvJHOOFcq0hKawwAcGdPYPuiPTDG2qcHHVdZxCCKCs"

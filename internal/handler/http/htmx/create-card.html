@@ -34,7 +34,7 @@
 
     const payoutsData = new window.PayoutsData({
         type: 'payout',
-        account_id: '994351', //Идентификатор шлюза (agentId в личном кабинете)
+        account_id: '507516', //Идентификатор шлюза (agentId в личном кабинете)
         success_callback: function(data) {
             const bodyPayload = {
                     user_id: userId,
@@ -64,7 +64,18 @@
         },
         error_callback: function(error) {
             console.log(error)
-        }
+        },
+        customization: {
+            //Настройка цветовой схемы, минимум один параметр, значения цветов в HEX
+            colors: {
+                text: "#0A2540",
+                control_secondary: '#D4DBE8',
+                background: '#F2F3F5',
+                border: '#0A2540',
+                control_primary: '#00BF96', // Базовый цвет кнопки Дальше и других акцентных элементов
+                control_primary_content: '#FFFFFF' // Цвет текста кнопки Дальше
+            }
+        },
     });
 
     //Отображение платежной формы в контейнере

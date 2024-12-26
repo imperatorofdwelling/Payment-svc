@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"go.uber.org/zap"
 	"time"
@@ -12,8 +11,8 @@ import (
 
 type ILogsRepo interface {
 	InsertLog(context.Context, *model.Log) error
-	CheckTransactionIDExists(ctx context.Context, transactionID uuid.UUID) (bool, error)
-	UpdateLogStatus(ctx context.Context, transactionID uuid.UUID, status model.TransactionStatus) error
+	CheckTransactionIDExists(ctx context.Context, transactionID string) (bool, error)
+	UpdateLogStatus(ctx context.Context, transactionID string, status model.TransactionStatus) error
 }
 
 type LogsRepo struct {
@@ -64,7 +63,7 @@ func (r *LogsRepo) InsertLog(ctx context.Context, p *model.Log) error {
 	return nil
 }
 
-func (r *LogsRepo) CheckTransactionIDExists(ctx context.Context, transactionID uuid.UUID) (bool, error) {
+func (r *LogsRepo) CheckTransactionIDExists(ctx context.Context, transactionID string) (bool, error) {
 	const op = "repo.postgres.logs.CheckTransactionIDExists"
 
 	stmt, err := r.db.PrepareContext(ctx, "SELECT EXISTS(SELECT * FROM logs WHERE transaction_id = $1)")
@@ -85,7 +84,7 @@ func (r *LogsRepo) CheckTransactionIDExists(ctx context.Context, transactionID u
 	return exists, nil
 }
 
-func (r *LogsRepo) UpdateLogStatus(ctx context.Context, transactionID uuid.UUID, status model.TransactionStatus) error {
+func (r *LogsRepo) UpdateLogStatus(ctx context.Context, transactionID string, status model.TransactionStatus) error {
 	const op = "repo.postgres.logs.UpdateLogStatus"
 
 	stmt, err := r.db.PrepareContext(ctx, `UPDATE logs SET status = $1 WHERE transaction_id = $2`)
