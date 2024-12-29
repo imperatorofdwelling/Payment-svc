@@ -15,10 +15,10 @@ import (
 type paymentsHandler struct {
 	svc         service.IPaymentSvc
 	log         *zap.SugaredLogger
-	yookassaHdl *yookassa.PaymentsHandler
+	yookassaHdl *yookassa.PaymentsSvc
 }
 
-func NewPaymentsHandler(r chi.Router, svc service.IPaymentSvc, yookassaHdl *yookassa.PaymentsHandler, log *zap.SugaredLogger) {
+func NewPaymentsHandler(r chi.Router, svc service.IPaymentSvc, yookassaHdl *yookassa.PaymentsSvc, log *zap.SugaredLogger) {
 	handler := &paymentsHandler{
 		svc:         svc,
 		log:         log,

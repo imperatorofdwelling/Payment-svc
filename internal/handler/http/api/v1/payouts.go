@@ -16,11 +16,11 @@ import (
 type payoutsHandler struct {
 	svc               service.IPayoutsSvc
 	cardSvc           service.ICardsSvc
-	yookassaPayoutHdl *yookassa.PayoutsHandler
+	yookassaPayoutHdl *yookassa.PayoutsSvc
 	log               *zap.SugaredLogger
 }
 
-func NewPayoutsHandler(r chi.Router, svc service.IPayoutsSvc, cardSvc service.ICardsSvc, yookassaPayoutHdl *yookassa.PayoutsHandler, log *zap.SugaredLogger) {
+func NewPayoutsHandler(r chi.Router, svc service.IPayoutsSvc, cardSvc service.ICardsSvc, yookassaPayoutHdl *yookassa.PayoutsSvc, log *zap.SugaredLogger) {
 	handler := &payoutsHandler{svc, cardSvc, yookassaPayoutHdl, log}
 
 	r.Route("/payouts", func(r chi.Router) {

@@ -34,8 +34,8 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 		rdbTransactionsRepo := redis.NewTransactionRepo(s.Redis)
 
 		yooClient := yookassa.NewYookassaClient(cfg.PayApi.ShopID, cfg.PayApi.SecretKey, cfg.PayApi.PayoutAgentID, cfg.PayApi.PayoutSecretKey)
-		yookassaPaymentsHdl := yookassa.NewPaymentsHandler(yooClient, log.Named("yookassa_handler"))
-		yookassaPayoutsHdl := yookassa.NewPayoutsHandler(yooClient, log.Named("yookassa_handler"))
+		yookassaPaymentsSvc := yookassa.NewPaymentsService(yooClient, log.Named("yookassa_handler"))
+		yookassaPayoutsSvc := yookassa.NewPayoutsService(yooClient, log.Named("yookassa_handler"))
 
 		htmx.NewHTMXHandler(r, log.Named("htmx_handler"))
 
@@ -48,13 +48,13 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 
 		paymentRepo := postgres.NewPaymentRepo(s.Psql, log.Named("payment_repo"))
 		paymentSvc := service.NewPaymentSvc(paymentRepo, logsSvc, log.Named("payment_service"))
-		v1.NewPaymentsHandler(r, paymentSvc, yookassaPaymentsHdl, log.Named("payment_handler"))
+		v1.NewPaymentsHandler(r, paymentSvc, yookassaPaymentsSvc, log.Named("payment_handler"))
 
-		payoutSubscriber := service.NewPayoutSubscriber(rdbTransactionsRepo, logsSvc, yookassaPayoutsHdl)
+		payoutSubscriber := service.NewPayoutSubscriber(rdbTransactionsRepo, logsSvc, yookassaPayoutsSvc)
 
 		payoutsRepo := postgres.NewPayoutsRepo(s.Psql, log.Named("payouts_repo"))
 		payoutsSvc := service.NewPayoutsService(payoutsRepo, payoutSubscriber, logsSvc, log.Named("payouts_service"))
-		v1.NewPayoutsHandler(r, payoutsSvc, cardsSvc, yookassaPayoutsHdl, log.Named("payout_handler"))
+		v1.NewPayoutsHandler(r, payoutsSvc, cardsSvc, yookassaPayoutsSvc, log.Named("payout_handler"))
 
 	})
 

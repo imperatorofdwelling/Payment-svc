@@ -19,10 +19,10 @@ type IPayoutSubscriber interface {
 type PayoutSubscriber struct {
 	rdbTransaction     redis.ITransactionRepo
 	logsSvc            ILogsSvc
-	yookassaPayoutsSvc *yookassa.PayoutsHandler
+	yookassaPayoutsSvc *yookassa.PayoutsSvc
 }
 
-func NewPayoutSubscriber(rdbTransaction redis.ITransactionRepo, logsSvc ILogsSvc, yookassaPayoutsHdl *yookassa.PayoutsHandler) *PayoutSubscriber {
+func NewPayoutSubscriber(rdbTransaction redis.ITransactionRepo, logsSvc ILogsSvc, yookassaPayoutsHdl *yookassa.PayoutsSvc) *PayoutSubscriber {
 	return &PayoutSubscriber{rdbTransaction, logsSvc, yookassaPayoutsHdl}
 }
 
@@ -66,7 +66,6 @@ func (s *PayoutSubscriber) runUpdater(payoutID string) error {
 	go signaller(ch, ctx)
 
 	for range ch {
-		fmt.Println("TICK")
 		var payout model.Payout
 
 		res, err := s.yookassaPayoutsSvc.GetPayoutInfo(payoutID)
