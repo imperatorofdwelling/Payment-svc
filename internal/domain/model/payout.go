@@ -26,7 +26,7 @@ type (
 		PayoutToken       string             `json:"payout_token,omitempty"`
 		Description       string             `json:"description,omitempty"`
 		Metadata          any                `json:"metadata,omitempty"`
-		Status            *TransactionStatus `json:"status,omitempty" validate:"omitempty"`
+		Status            TransactionStatus  `json:"status,omitempty" validate:"omitempty"`
 		PayoutDestination *PayoutDestination `json:"payout_destination,omitempty" validate:"omitempty"`
 		CreatedAt         *time.Time         `json:"created_at,omitempty" validate:"omitempty,datetime"`
 		Test              bool               `json:"test,omitempty"`

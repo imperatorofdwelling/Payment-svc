@@ -74,7 +74,7 @@ func (c *Client) makeRequest(
 ) (*http.Response, error) {
 	var uri string
 
-	if param != "" {
+	if param == "" {
 		uri = fmt.Sprintf("%s/%s", yookassaApiAddr, endpoint)
 	} else {
 		uri = fmt.Sprintf("%s/%s/%s", yookassaApiAddr, endpoint, param)

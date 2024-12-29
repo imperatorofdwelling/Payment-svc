@@ -19,7 +19,7 @@ type IPayoutSubscriber interface {
 type PayoutSubscriber struct {
 	rdbTransaction     redis.ITransactionRepo
 	logsSvc            ILogsSvc
-	yookassaPayoutsHdl *yookassa.PayoutsHandler
+	yookassaPayoutsSvc *yookassa.PayoutsHandler
 }
 
 func NewPayoutSubscriber(rdbTransaction redis.ITransactionRepo, logsSvc ILogsSvc, yookassaPayoutsHdl *yookassa.PayoutsHandler) *PayoutSubscriber {
@@ -46,8 +46,12 @@ func (s *PayoutSubscriber) Subscribe(payoutID string, status model.TransactionSt
 		return fmt.Errorf("%s: %v", op, err)
 	}
 
-	// TODO fix errors in updater
-	go s.runUpdater(payoutID)
+	go func() {
+		err := s.runUpdater(payoutID)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}()
 
 	return nil
 }
@@ -65,37 +69,36 @@ func (s *PayoutSubscriber) runUpdater(payoutID string) error {
 		fmt.Println("TICK")
 		var payout model.Payout
 
-		res, err := s.yookassaPayoutsHdl.GetPayoutInfo(payoutID)
+		res, err := s.yookassaPayoutsSvc.GetPayoutInfo(payoutID)
 		if err != nil {
-			return fmt.Errorf("%s: %v", op, err)
+			return fmt.Errorf("%s: %s", op, "error getting payout info")
 		}
 
 		err = json.Read(res.Body, &payout)
 		if err != nil {
-			return fmt.Errorf("%s: %v", op, err)
+			return fmt.Errorf("%s: %v", op, json.DecodeBodyError)
 		}
 
 		statusInRedis, err := s.rdbTransaction.GetStatus(payoutID)
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %v", op, err)
 		}
 
-		if statusInRedis != *payout.Status {
-			err = s.rdbTransaction.UpdateStatus(payoutID, *payout.Status)
+		if statusInRedis != payout.Status {
+			err = s.rdbTransaction.UpdateStatus(payoutID, payout.Status)
+			if err != nil {
+				return fmt.Errorf("%s: error updating status of payout in redis", op)
+			}
+
+			err = s.logsSvc.UpdateLogTransactionStatus(ctx, payout.ID, payout.Status)
 			if err != nil {
 				return err
 			}
 
-			err = s.logsSvc.UpdateLogTransactionStatus(ctx, payout.ID, *payout.Status)
-			if err != nil {
-				return err
-			}
-
-			if *payout.Status == model.Succeeded || *payout.Status == model.Canceled {
+			if payout.Status == model.Succeeded || payout.Status == model.Canceled {
 				break
 			}
 		}
-
 	}
 
 	return nil
@@ -104,12 +107,13 @@ func (s *PayoutSubscriber) runUpdater(payoutID string) error {
 func signaller(ch chan<- struct{}, ctx context.Context) {
 	select {
 	case <-ctx.Done():
+		close(ch)
 		return
 	default:
 		fibArr := getFibArr()
 
 		for _, timing := range fibArr {
-			sleepTiming := time.Duration(timing) * time.Minute
+			sleepTiming := time.Duration(timing) * time.Second
 			sleep(sleepTiming, ctx)
 			ch <- struct{}{}
 		}
@@ -133,7 +137,7 @@ func getFibArr() []int {
 	var fibArr = []int{1, 1}
 
 	var fibSum int
-	maxFibSum := int(math.Round(redis.Expiration.Minutes()))
+	maxFibSum := int(math.Round(redis.Expiration.Seconds()))
 
 	index := 2
 
