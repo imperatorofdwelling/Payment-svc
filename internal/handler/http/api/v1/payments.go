@@ -25,7 +25,7 @@ func NewPaymentsHandler(r chi.Router, svc service.IPaymentSvc, yookassaHdl *yook
 		yookassaHdl: yookassaHdl,
 	}
 
-	r.Route("/payments", func(r chi.Router) {
+	r.Route("/payment", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Post("/", handler.createPayment)
 		})

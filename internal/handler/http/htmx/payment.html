@@ -23,10 +23,12 @@
 <a href=https://yookassa.ru/developers/payment-acceptance/testing-and-going-live/testing#test-bank-card>Другие тестовые банковские карты</a>
 
 <script>
+    const confirmationToken = "{{ .Data.ConfirmationToken }}"
+    const returnURL = "{{ .Data.ReturnUrl }}"
     //Инициализация виджета. Все параметры обязательные.
     const checkout = new window.YooMoneyCheckoutWidget({
-        confirmation_token: 'ct-2efe31d2-000f-5000-9000-1594ee6e88a7', //Токен, который перед проведением оплаты нужно получить от ЮKassa
-        return_url: 'https://example.com/', //Ссылка на страницу завершения оплаты, это может быть любая ваша страница
+        confirmation_token: confirmationToken, //Токен, который перед проведением оплаты нужно получить от ЮKassa
+        return_url: returnURL, //Ссылка на страницу завершения оплаты, это может быть любая ваша страница
 
         //При необходимости можно изменить цвета виджета, подробные настройки см. в документации
         //customization: {

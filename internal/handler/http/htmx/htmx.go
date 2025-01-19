@@ -28,7 +28,7 @@ func NewHTMXHandler(r chi.Router, logger *zap.SugaredLogger) *htmxHandler {
 
 	r.Route("/htmx", func(r chi.Router) {
 		r.Get("/cards/{userId}", hdl.SaveCardPage)
-		r.Get("/payments", hdl.PaymentsPage)
+		r.Get("/payment/{confirmationToken}", hdl.PaymentsPage)
 	})
 
 	return hdl
@@ -60,9 +60,11 @@ func (hdl *htmxHandler) SaveCardPage(w http.ResponseWriter, r *http.Request) {
 func (hdl *htmxHandler) PaymentsPage(w http.ResponseWriter, r *http.Request) {
 	h := hdl.htmx.NewHandler(w, r)
 
+	confirmationToken := chi.URLParam(r, "confirmationToken")
+
 	data := map[string]any{
-		"ConfirmationToken": "ct-2efb2d91-000f-5000-9000-1c4ddb928aac",
-		"ReturnUrl":         "https://ya.ru/",
+		"ConfirmationToken": confirmationToken,
+		"ReturnUrl":         "https://example.com/",
 	}
 
 	page := htmx.NewComponent("payment.html").FS(templates).SetData(data)
