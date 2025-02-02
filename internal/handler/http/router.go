@@ -1,16 +1,18 @@
 package http
 
 import (
+	"github.com/eclipsemode/go-yookassa-sdk/yookassa"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/imperatorofdwelling/payment-svc/internal/config"
 	v1 "github.com/imperatorofdwelling/payment-svc/internal/handler/http/api/v1"
 	"github.com/imperatorofdwelling/payment-svc/internal/handler/http/htmx"
+	kafka "github.com/imperatorofdwelling/payment-svc/internal/handler/kafka/consumer"
+	consumer "github.com/imperatorofdwelling/payment-svc/internal/handler/kafka/consumer/payment"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/redis"
-	"github.com/imperatorofdwelling/payment-svc/pkg/yookassa"
 	"go.uber.org/zap"
 	"time"
 )
@@ -37,8 +39,6 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 		yookassaPaymentsSvc := yookassa.NewPaymentsService(yooClient, log.Named("yookassa_handler"))
 		yookassaPayoutsSvc := yookassa.NewPayoutsService(yooClient, log.Named("yookassa_handler"))
 
-		htmx.NewHTMXHandler(r, log.Named("htmx_handler"))
-
 		cardsRepo := postgres.NewCardsRepo(s.Psql, log.Named("cards_repo"))
 		cardsSvc := service.NewCardsService(cardsRepo, log.Named("cards_service"))
 
@@ -55,6 +55,12 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 		payoutsRepo := postgres.NewPayoutsRepo(s.Psql, log.Named("payouts_repo"))
 		payoutsSvc := service.NewPayoutsService(payoutsRepo, payoutSubscriber, logsSvc, log.Named("payouts_service"))
 		v1.NewPayoutsHandler(r, payoutsSvc, cardsSvc, yookassaPayoutsSvc, log.Named("payout_handler"))
+
+		paymentConsumer := consumer.NewPaymentConsumer(log.Named("kafka_payment_consumer"), yookassaPaymentsSvc, paymentSvc)
+
+		kafka.SetupKafkaConsumers(paymentConsumer)
+
+		htmx.NewHTMXHandler(r, log.Named("htmx_handler"))
 
 	})
 

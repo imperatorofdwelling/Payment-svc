@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/eclipsemode/go-yookassa-sdk/yookassa/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"go.uber.org/zap"
 	"time"
@@ -12,7 +13,7 @@ import (
 type ILogsRepo interface {
 	InsertLog(context.Context, *model.Log) error
 	CheckTransactionIDExists(ctx context.Context, transactionID string) (bool, error)
-	UpdateLogStatus(ctx context.Context, transactionID string, status model.TransactionStatus) error
+	UpdateLogStatus(ctx context.Context, transactionID string, status yoomodel.TransactionStatus) error
 }
 
 type LogsRepo struct {
@@ -84,7 +85,7 @@ func (r *LogsRepo) CheckTransactionIDExists(ctx context.Context, transactionID s
 	return exists, nil
 }
 
-func (r *LogsRepo) UpdateLogStatus(ctx context.Context, transactionID string, status model.TransactionStatus) error {
+func (r *LogsRepo) UpdateLogStatus(ctx context.Context, transactionID string, status yoomodel.TransactionStatus) error {
 	const op = "repo.postgres.logs.UpdateLogStatus"
 
 	stmt, err := r.db.PrepareContext(ctx, `UPDATE logs SET status = $1 WHERE transaction_id = $2`)

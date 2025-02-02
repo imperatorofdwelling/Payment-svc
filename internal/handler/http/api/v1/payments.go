@@ -1,13 +1,13 @@
 package v1
 
 import (
+	"github.com/eclipsemode/go-yookassa-sdk/yookassa"
+	yoomodel "github.com/eclipsemode/go-yookassa-sdk/yookassa/model"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	v10 "github.com/imperatorofdwelling/payment-svc/internal/lib/validator"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"github.com/imperatorofdwelling/payment-svc/pkg/json"
-	"github.com/imperatorofdwelling/payment-svc/pkg/yookassa"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -34,7 +34,7 @@ func NewPaymentsHandler(r chi.Router, svc service.IPaymentSvc, yookassaHdl *yook
 
 func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) {
 	const op = "handler.v1.payments.createPayment"
-	var payment model.Payment
+	var payment yoomodel.Payment
 
 	idempotenceKey := r.Header.Get("Idempotence-Key")
 	if idempotenceKey == "" {
@@ -62,7 +62,7 @@ func (h *paymentsHandler) createPayment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var newPayment model.Payment
+	var newPayment yoomodel.Payment
 
 	err = json.Read(paymentRes.Body, &newPayment)
 	if err != nil {

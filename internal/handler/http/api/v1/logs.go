@@ -1,8 +1,8 @@
 package v1
 
 import (
+	yoomodel "github.com/eclipsemode/go-yookassa-sdk/yookassa/model"
 	"github.com/go-chi/chi/v5"
-	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"github.com/imperatorofdwelling/payment-svc/pkg/json"
 	"go.uber.org/zap"
@@ -26,7 +26,7 @@ func NewLogsHandler(r chi.Router, svc service.ILogsSvc, log *zap.SugaredLogger) 
 func (h *logsHandler) changeStatus(w http.ResponseWriter, r *http.Request) {
 	const op = "handler.v1.lost.changeStatus"
 
-	var notification model.Notification
+	var notification yoomodel.Notification
 
 	err := json.Read(r.Body, &notification)
 	if err != nil {

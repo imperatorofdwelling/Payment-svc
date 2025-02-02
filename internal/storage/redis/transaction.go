@@ -3,15 +3,15 @@ package redis
 import (
 	"errors"
 	"fmt"
-	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
+	yoomodel "github.com/eclipsemode/go-yookassa-sdk/yookassa/model"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
 
 type ITransactionRepo interface {
-	Commit(id string, status model.TransactionStatus) error
-	UpdateStatus(id string, status model.TransactionStatus) error
-	GetStatus(id string) (model.TransactionStatus, error)
+	Commit(id string, status yoomodel.TransactionStatus) error
+	UpdateStatus(id string, status yoomodel.TransactionStatus) error
+	GetStatus(id string) (yoomodel.TransactionStatus, error)
 	IsExists(id string) (bool, error)
 }
 
@@ -34,7 +34,7 @@ func NewTransactionRepo(rdb *redis.Client) *TransactionRepo {
 	return &TransactionRepo{rdb: rdb}
 }
 
-func (r *TransactionRepo) Commit(id string, status model.TransactionStatus) error {
+func (r *TransactionRepo) Commit(id string, status yoomodel.TransactionStatus) error {
 	const op = "redis.transaction.Commit"
 
 	exists, err := r.IsExists(id)
@@ -53,7 +53,7 @@ func (r *TransactionRepo) Commit(id string, status model.TransactionStatus) erro
 	return err
 }
 
-func (r *TransactionRepo) UpdateStatus(id string, status model.TransactionStatus) error {
+func (r *TransactionRepo) UpdateStatus(id string, status yoomodel.TransactionStatus) error {
 	const op = "redis.transaction.UpdateStatus"
 
 	exists, err := r.IsExists(id)
@@ -80,7 +80,7 @@ func (r *TransactionRepo) UpdateStatus(id string, status model.TransactionStatus
 	}
 }
 
-func (r *TransactionRepo) GetStatus(id string) (model.TransactionStatus, error) {
+func (r *TransactionRepo) GetStatus(id string) (yoomodel.TransactionStatus, error) {
 	const op = "redis.transaction.GetStatus"
 
 	exists, err := r.IsExists(id)
@@ -93,14 +93,14 @@ func (r *TransactionRepo) GetStatus(id string) (model.TransactionStatus, error) 
 	}
 
 	transactionKey := r.getKey(id)
-	var transactionStatus model.TransactionStatus
+	var transactionStatus yoomodel.TransactionStatus
 
 	err = r.rdb.Watch(ctx, func(tx *redis.Tx) error {
 		status, err := tx.Get(ctx, transactionKey).Result()
 		if err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}
-		transactionStatus = model.TransactionStatus(status)
+		transactionStatus = yoomodel.TransactionStatus(status)
 		return nil
 	}, transactionKey)
 	if errors.Is(err, redis.TxFailedErr) {
@@ -110,7 +110,7 @@ func (r *TransactionRepo) GetStatus(id string) (model.TransactionStatus, error) 
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	if transactionStatus == model.Succeeded || transactionStatus == model.Canceled {
+	if transactionStatus == yoomodel.Succeeded || transactionStatus == yoomodel.Canceled {
 		defer r.delKey(id)
 	}
 

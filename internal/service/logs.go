@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/eclipsemode/go-yookassa-sdk/yookassa/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
 	"go.uber.org/zap"
@@ -10,7 +11,7 @@ import (
 
 type ILogsSvc interface {
 	InsertLog(ctx context.Context, log *model.Log) error
-	UpdateLogTransactionStatus(ctx context.Context, transactionId string, status model.TransactionStatus) error
+	UpdateLogTransactionStatus(ctx context.Context, transactionId string, status yoomodel.TransactionStatus) error
 }
 
 type LogsSvc struct {
@@ -33,7 +34,7 @@ func (s *LogsSvc) InsertLog(ctx context.Context, log *model.Log) error {
 	return nil
 }
 
-func (s *LogsSvc) UpdateLogTransactionStatus(ctx context.Context, transactionId string, status model.TransactionStatus) error {
+func (s *LogsSvc) UpdateLogTransactionStatus(ctx context.Context, transactionId string, status yoomodel.TransactionStatus) error {
 	const op = "service.logs.UpdateLogStatus"
 
 	err := s.repo.UpdateLogStatus(ctx, transactionId, status)

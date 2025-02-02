@@ -3,13 +3,14 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/eclipsemode/go-yookassa-sdk/yookassa/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
 	"go.uber.org/zap"
 )
 
 type IPaymentSvc interface {
-	CreatePayment(context.Context, *model.Payment) error
+	CreatePayment(context.Context, *yoomodel.Payment) error
 }
 
 type PaymentSvc struct {
@@ -26,12 +27,12 @@ func NewPaymentSvc(repo postgres.IPaymentRepo, logsSvc ILogsSvc, log *zap.Sugare
 	}
 }
 
-func (s *PaymentSvc) CreatePayment(ctx context.Context, payment *model.Payment) error {
+func (s *PaymentSvc) CreatePayment(ctx context.Context, payment *yoomodel.Payment) error {
 	const op = "service.payments.CreatePayment"
 
 	newLog := &model.Log{
 		TransactionID:   payment.ID,
-		TransactionType: model.PaymentType,
+		TransactionType: yoomodel.PaymentType,
 		Status:          payment.Status,
 		Value:           payment.Amount.Value,
 		Currency:        payment.Amount.Currency,

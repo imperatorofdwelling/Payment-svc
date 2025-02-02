@@ -19,14 +19,12 @@ type Consumer struct {
 
 var ServerAddr = []string{"localhost:9094", "localhost:9095", "localhost:9096"}
 
-func SetupKafkaConsumers() {
+func SetupKafkaConsumers(paymentConsumer *consumer.PaymentConsumer) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
 		consumerGroup := newConsumerGroup()
 		defer consumerGroup.Group.Close()
-
-		paymentConsumer := consumer.NewPaymentConsumer()
 
 		consumerGroup.Setup(ctx, consumerGroup.Group, paymentConsumer)
 

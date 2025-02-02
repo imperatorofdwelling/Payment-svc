@@ -3,17 +3,17 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
+	"github.com/eclipsemode/go-yookassa-sdk/yookassa"
+	yoomodel "github.com/eclipsemode/go-yookassa-sdk/yookassa/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/redis"
 	"github.com/imperatorofdwelling/payment-svc/pkg/json"
-	"github.com/imperatorofdwelling/payment-svc/pkg/yookassa"
 	"github.com/pkg/errors"
 	"math"
 	"time"
 )
 
 type IPayoutSubscriber interface {
-	Subscribe(payoutID string, status model.TransactionStatus) error
+	Subscribe(payoutID string, status yoomodel.TransactionStatus) error
 }
 
 type PayoutSubscriber struct {
@@ -26,9 +26,9 @@ func NewPayoutSubscriber(rdbTransaction redis.ITransactionRepo, logsSvc ILogsSvc
 	return &PayoutSubscriber{rdbTransaction, logsSvc, yookassaPayoutsHdl}
 }
 
-func (s *PayoutSubscriber) Subscribe(payoutID string, status model.TransactionStatus) error {
+func (s *PayoutSubscriber) Subscribe(payoutID string, status yoomodel.TransactionStatus) error {
 	const op = "service.payout.Subscribe"
-	if status == model.Succeeded || status == model.Canceled {
+	if status == yoomodel.Succeeded || status == yoomodel.Canceled {
 		return nil
 	}
 
@@ -66,7 +66,7 @@ func (s *PayoutSubscriber) runUpdater(payoutID string) error {
 	go signaller(ch, ctx)
 
 	for range ch {
-		var payout model.Payout
+		var payout yoomodel.Payout
 
 		res, err := s.yookassaPayoutsSvc.GetPayoutInfo(payoutID)
 		if err != nil {
@@ -94,7 +94,7 @@ func (s *PayoutSubscriber) runUpdater(payoutID string) error {
 				return err
 			}
 
-			if payout.Status == model.Succeeded || payout.Status == model.Canceled {
+			if payout.Status == yoomodel.Succeeded || payout.Status == yoomodel.Canceled {
 				break
 			}
 		}

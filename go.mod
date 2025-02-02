@@ -1,10 +1,11 @@
 module github.com/imperatorofdwelling/payment-svc
 
-go 1.23.4
+go 1.23.5
 
 require (
 	github.com/IBM/sarama v1.45.0
 	github.com/donseba/go-htmx v1.12.0
+	github.com/eclipsemode/go-yookassa-sdk v1.0.1
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/golang-migrate/migrate/v4 v4.18.1

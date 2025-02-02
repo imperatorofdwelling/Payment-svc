@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"github.com/eclipsemode/go-yookassa-sdk/yookassa"
+	yoomodel "github.com/eclipsemode/go-yookassa-sdk/yookassa/model"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -8,7 +10,6 @@ import (
 	v10 "github.com/imperatorofdwelling/payment-svc/internal/lib/validator"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"github.com/imperatorofdwelling/payment-svc/pkg/json"
-	"github.com/imperatorofdwelling/payment-svc/pkg/yookassa"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -90,7 +91,7 @@ func (h *payoutsHandler) getPayoutInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payoutInfo model.Payout
+	var payoutInfo yoomodel.Payout
 
 	err = json.Read(res.Body, &payoutInfo)
 	if err != nil {
@@ -113,7 +114,7 @@ func (h *payoutsHandler) makePayout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var newPayout model.Payout
+	var newPayout yoomodel.Payout
 
 	err := json.Read(r.Body, &newPayout)
 	if err != nil {
@@ -135,7 +136,7 @@ func (h *payoutsHandler) makePayout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var createdPayout model.Payout
+	var createdPayout yoomodel.Payout
 
 	err = json.Read(payoutRes.Body, &createdPayout)
 	if err != nil {
