@@ -1,7 +1,7 @@
 package consumer
 
 import (
-	"encoding/json"
+	jsonDefault "encoding/json"
 	"fmt"
 	"github.com/IBM/sarama"
 	"github.com/eclipsemode/go-yookassa-sdk/yookassa"
@@ -10,10 +10,12 @@ import (
 	kafka "github.com/imperatorofdwelling/payment-svc/internal/handler/kafka/consumer"
 	v10 "github.com/imperatorofdwelling/payment-svc/internal/lib/validator"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
+	"github.com/imperatorofdwelling/payment-svc/pkg/json"
 	"go.uber.org/zap"
 )
 
 type PaymentConsumer struct {
+	// TODO fix bug with using log (crushing the app)
 	log                *zap.SugaredLogger
 	yookassaPaymentSvc *yookassa.PaymentsSvc
 	paymentSvc         service.IPaymentSvc
@@ -25,24 +27,46 @@ func (*PaymentConsumer) Cleanup(sarama.ConsumerGroupSession) error { return nil 
 
 func (c *PaymentConsumer) ConsumeClaim(
 	sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	const op = "kafka.consumer.payment.ConsumeClaim"
 	for msg := range claim.Messages() {
 		requestID := string(msg.Key)
 
 		var payment yoomodel.Payment
 
-		err := json.Unmarshal(msg.Value, &payment)
+		err := jsonDefault.Unmarshal(msg.Value, &payment)
 		if err != nil {
-			return fmt.Errorf("error unmarshalling message: %w", err)
+			return fmt.Errorf("%s: %s", op, err.Error())
 		}
 
 		if err := v10.Validate.Struct(payment); err != nil {
 			validationErr := err.(validator.ValidationErrors)
-			return fmt.Errorf("error validating payment fields: %v", validationErr)
+			return fmt.Errorf("%s: %w", "error validating payment fields", validationErr)
 		}
 
-		err = c.kafkaProducer.SendMessage(kafka.PaymentResponseTopic, requestID, "GUTEN TAG BACK")
+		paymentRes, err := c.yookassaPaymentSvc.CreatePayment(&payment, requestID)
 		if err != nil {
-			return fmt.Errorf("error sending message: %w", err)
+			return fmt.Errorf("%s: %s", op, err.Error())
+		}
+
+		var newPayment yoomodel.Payment
+
+		err = json.Read(paymentRes.Body, &newPayment)
+		if err != nil {
+			return fmt.Errorf("%s: %s", op, err.Error())
+		}
+
+		if newPayment.Status == "" {
+			return fmt.Errorf("%s: %s", op, "error creating payment")
+		}
+
+		err = c.paymentSvc.CreatePayment(sess.Context(), &newPayment)
+		if err != nil {
+			return fmt.Errorf("%s: %s", op, err.Error())
+		}
+
+		err = c.kafkaProducer.SendMessage(kafka.PaymentResponseTopic, requestID, newPayment)
+		if err != nil {
+			return fmt.Errorf("%s: %s", op, err.Error())
 		}
 
 		sess.MarkMessage(msg, "")
