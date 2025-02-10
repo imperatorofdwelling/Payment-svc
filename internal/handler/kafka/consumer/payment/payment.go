@@ -7,6 +7,7 @@ import (
 	"github.com/eclipsemode/go-yookassa-sdk/yookassa"
 	yoomodel "github.com/eclipsemode/go-yookassa-sdk/yookassa/model"
 	"github.com/go-playground/validator/v10"
+	kafka "github.com/imperatorofdwelling/payment-svc/internal/handler/kafka/consumer"
 	v10 "github.com/imperatorofdwelling/payment-svc/internal/lib/validator"
 	"github.com/imperatorofdwelling/payment-svc/internal/service"
 	"go.uber.org/zap"
@@ -16,16 +17,16 @@ type PaymentConsumer struct {
 	log                *zap.SugaredLogger
 	yookassaPaymentSvc *yookassa.PaymentsSvc
 	paymentSvc         service.IPaymentSvc
+	kafkaProducer      *kafka.Producer
 }
 
 func (*PaymentConsumer) Setup(sarama.ConsumerGroupSession) error   { return nil }
 func (*PaymentConsumer) Cleanup(sarama.ConsumerGroupSession) error { return nil }
 
-func (consumer *PaymentConsumer) ConsumeClaim(
+func (c *PaymentConsumer) ConsumeClaim(
 	sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
-		fmt.Println("Idempotency Key", string(msg.Key))
-		fmt.Println("Hello WOOOOORLD: ", string(msg.Value))
+		requestID := string(msg.Key)
 
 		var payment yoomodel.Payment
 
@@ -39,9 +40,9 @@ func (consumer *PaymentConsumer) ConsumeClaim(
 			return fmt.Errorf("error validating payment fields: %v", validationErr)
 		}
 
-		if payment.Status == "" {
-			consumer.log.Error("invalid response from api")
-			return fmt.Errorf("invalid response from api")
+		err = c.kafkaProducer.SendMessage(kafka.PaymentResponseTopic, requestID, "GUTEN TAG BACK")
+		if err != nil {
+			return fmt.Errorf("error sending message: %w", err)
 		}
 
 		sess.MarkMessage(msg, "")
@@ -49,8 +50,8 @@ func (consumer *PaymentConsumer) ConsumeClaim(
 	return nil
 }
 
-func NewPaymentConsumer(log *zap.SugaredLogger, yookassaPaymentSvc *yookassa.PaymentsSvc, paymentSvc service.IPaymentSvc) *PaymentConsumer {
+func NewPaymentConsumer(log *zap.SugaredLogger, yookassaPaymentSvc *yookassa.PaymentsSvc, paymentSvc service.IPaymentSvc, kafkaProducer *kafka.Producer) *PaymentConsumer {
 	return &PaymentConsumer{
-		log, yookassaPaymentSvc, paymentSvc,
+		log, yookassaPaymentSvc, paymentSvc, kafkaProducer,
 	}
 }

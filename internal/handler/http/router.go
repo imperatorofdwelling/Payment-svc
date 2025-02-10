@@ -56,7 +56,9 @@ func NewRouter(s *storage.Storage, log *zap.SugaredLogger, cfg *config.Config) *
 		payoutsSvc := service.NewPayoutsService(payoutsRepo, payoutSubscriber, logsSvc, log.Named("payouts_service"))
 		v1.NewPayoutsHandler(r, payoutsSvc, cardsSvc, yookassaPayoutsSvc, log.Named("payout_handler"))
 
-		paymentConsumer := consumer.NewPaymentConsumer(log.Named("kafka_payment_consumer"), yookassaPaymentsSvc, paymentSvc)
+		kafkaProducer := kafka.NewKafkaProducer(log.Named("kafka_producer"))
+
+		paymentConsumer := consumer.NewPaymentConsumer(log.Named("kafka_payment_consumer"), yookassaPaymentsSvc, paymentSvc, kafkaProducer)
 
 		kafka.SetupKafkaConsumers(paymentConsumer)
 

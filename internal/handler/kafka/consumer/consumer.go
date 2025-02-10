@@ -3,7 +3,6 @@ package kafka
 import (
 	"context"
 	"github.com/IBM/sarama"
-	consumer "github.com/imperatorofdwelling/payment-svc/internal/handler/kafka/consumer/payment"
 	"log"
 )
 
@@ -19,14 +18,14 @@ type Consumer struct {
 
 var ServerAddr = []string{"localhost:9094", "localhost:9095", "localhost:9096"}
 
-func SetupKafkaConsumers(paymentConsumer *consumer.PaymentConsumer) {
+func SetupKafkaConsumers(hdl sarama.ConsumerGroupHandler) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
 		consumerGroup := newConsumerGroup()
 		defer consumerGroup.Group.Close()
 
-		consumerGroup.Setup(ctx, consumerGroup.Group, paymentConsumer)
+		consumerGroup.Setup(ctx, consumerGroup.Group, hdl)
 
 		defer cancel()
 	}()
