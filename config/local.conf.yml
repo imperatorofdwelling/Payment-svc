@@ -6,14 +6,14 @@ server:
   idle_timeout: 60s
 db:
   postgres:
-    host: "localhost"
+    host: "db-payment"
     username: "postgres"
     password: "postgres"
     db_name: "iod_payment"
-    port: 5534
+    port: 5432
     ssl_mode: "disable"
   redis:
-    host: "localhost"
+    host: "redis-payment"
     port: 6379
     password: "12345678"
     protocol: 3

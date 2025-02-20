@@ -1,14 +1,19 @@
 volumes:
   iod_payment_postgres_data:
   iod_payment_redis_data:
+  iod_payment_static_data:
+
+networks:
+  iod-kafka_iod-net:
+    external: true
 
 services:
-  db:
+  db-payment:
     container_name: db-payment
     image: postgres:17.2-alpine
     restart: always
-    ports:
-      - ${POSTGRES_PORT}:5432
+    expose:
+      - ${POSTGRES_PORT}
     environment:
       POSTGRES_USER: $POSTGRES_USERNAME
       POSTGRES_PASSWORD: $POSTGRES_PASSWORD
@@ -21,14 +26,16 @@ services:
       retries: 5
       start_period: 30s
       timeout: 10s
-  redis:
+    networks:
+      - iod-kafka_iod-net
+  redis-payment:
     container_name: redis-payment
     image: redis:7.4.1-alpine
     restart: always
     environment:
       REDIS_PASSWORD: $REDIS_PASSWORD
-    ports:
-      - ${REDIS_PORT}:6379
+    expose:
+      - ${REDIS_PORT}
     volumes:
       - iod_payment_redis_data:/data
     healthcheck:
@@ -38,11 +45,42 @@ services:
       retries: 5
     tty: true
     stdin_open: true
-  migrate:
+    networks:
+      - iod-kafka_iod-net
+  migrate-payment:
     image: migrate/migrate
     volumes:
       - ../../internal/storage/postgres/migrations:/migrations
-    command: [ "-source", "file://migrations", "-database", "postgres://$POSTGRES_USERNAME:$POSTGRES_PASSWORD@db:5432/$POSTGRES_DB_NAME?sslmode=disable", "up" ]
+    command: [ "-source", "file://migrations", "-database", "postgres://$POSTGRES_USERNAME:$POSTGRES_PASSWORD@db-payment:${POSTGRES_PORT}/$POSTGRES_DB_NAME?sslmode=disable", "up" ]
     depends_on:
-      db:
+      db-payment:
         condition: service_healthy
+    networks:
+      - iod-kafka_iod-net
+    profiles: [migrate-up]
+  migrate-down-payment:
+    image: migrate/migrate
+    volumes:
+      - ../../internal/storage/postgres/migrations:/migrations
+    command: [ "-source", "file://migrations", "-database", "postgres://$POSTGRES_USERNAME:$POSTGRES_PASSWORD@db-payment:${POSTGRES_PORT}/$POSTGRES_DB_NAME?sslmode=disable", "down", "-all" ]
+    depends_on:
+      db-payment:
+        condition: service_healthy
+    profiles: [ migrate-down ]
+    networks:
+      - iod-kafka_iod-net
+  server-payment:
+    container_name: server-payment
+    restart: always
+    build:
+      context: ../../
+      dockerfile: ./docker/dev/dev.Dockerfile
+    expose:
+      - "8081"
+    volumes:
+      - iod_payment_static_data:/static
+    depends_on:
+      db-payment:
+        condition: service_healthy
+    networks:
+      - iod-kafka_iod-net
