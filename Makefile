@@ -29,9 +29,9 @@ migrate-down-docker-local:
 migrate-up-docker-local:
 	@docker compose --env-file ./.env -f ./docker/local/docker-compose.yml -p iod-payment run --rm migrate-payment
 migrate-down-docker-dev:
-	@docker compose --env-file ./.env -f ./dev.docker-compose.yml -p iod-payment run --rm migrate-down-payment
+	@docker compose --env-file ./.env -f ./docker/dev/dev.docker-compose.yml -p iod-payment run --rm migrate-down-payment
 migrate-up-docker-dev:
-	@docker compose --env-file ./.env -f ./dev.docker-compose.yml -p iod-payment run --rm migrate-payment
+	@docker compose --env-file ./.env -f ./docker/dev/dev.docker-compose.yml -p iod-payment run --rm migrate-payment
 
 ### YML config convert to .env (for docker compose usage) ###
 create-env:
