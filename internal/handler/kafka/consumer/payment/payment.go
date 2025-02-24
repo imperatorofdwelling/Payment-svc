@@ -28,6 +28,7 @@ func (*PaymentConsumer) Cleanup(sarama.ConsumerGroupSession) error { return nil 
 func (c *PaymentConsumer) ConsumeClaim(
 	sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	const op = "kafka.consumer.payment.ConsumeClaim"
+
 	for msg := range claim.Messages() {
 		requestID := string(msg.Key)
 
