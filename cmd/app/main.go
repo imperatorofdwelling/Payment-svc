@@ -11,5 +11,5 @@ func main() {
 		panic(err)
 	}
 
-	appV1.Server.Stop()
+	appV1.Server.Stop(appV1.Scheduler)
 }

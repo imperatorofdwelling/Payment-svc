@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/imperatorofdwelling/payment-svc/internal/config"
+	"github.com/imperatorofdwelling/payment-svc/internal/lib/scheduler"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
@@ -42,8 +43,10 @@ func (s *Server) Start() error {
 	return nil
 }
 
-func (s *Server) Stop() {
+func (s *Server) Stop(scheduler *scheduler.Scheduler) {
 	quit := make(chan os.Signal, 1)
+
+	scheduler.Stop()
 
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sign := <-quit
