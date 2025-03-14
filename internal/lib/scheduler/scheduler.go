@@ -16,12 +16,14 @@ func NewScheduler(log *zap.SugaredLogger) *Scheduler {
 	return &Scheduler{c, log}
 }
 
-func (s *Scheduler) Run() {
-	s.cron.AddFunc("0 22 * * *", func() {
+func (s *Scheduler) Start() {
+	s.cron.Start()
+}
+
+func (s *Scheduler) Create(pattern string) {
+	s.cron.AddFunc(pattern, func() {
 		fmt.Println("Scheduler works")
 	})
-
-	s.cron.Start()
 }
 
 func (s *Scheduler) Stop() {
@@ -31,3 +33,5 @@ func (s *Scheduler) Stop() {
 		s.log.Info("Scheduler stopped")
 	}
 }
+
+//"0 22 * * *" example cron

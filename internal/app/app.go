@@ -21,7 +21,7 @@ func NewApp() *App {
 	log := logger.NewZapLogger(cfg.Env)
 
 	s := scheduler.NewScheduler(log)
-	s.Run()
+	s.Start()
 
 	v10.NewValidator(log)
 
