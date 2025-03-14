@@ -2,14 +2,17 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/eclipsemode/go-yookassa-sdk/yookassa/model"
 	"github.com/imperatorofdwelling/payment-svc/internal/domain/model"
+	"github.com/imperatorofdwelling/payment-svc/internal/lib/scheduler"
 	"github.com/imperatorofdwelling/payment-svc/internal/storage/postgres"
 	"go.uber.org/zap"
 )
 
 type IPayoutsSvc interface {
 	CreatePayout(ctx context.Context, payout yoomodel.Payout) error
+	SchedulePayout(ctx context.Context, payout yoomodel.Payout, scheduler *scheduler.Scheduler) error
 }
 
 type PayoutsSvc struct {
@@ -44,5 +47,16 @@ func (s *PayoutsSvc) CreatePayout(ctx context.Context, payout yoomodel.Payout) e
 		return err
 	}
 
+	return nil
+}
+
+func (s *PayoutsSvc) SchedulePayout(ctx context.Context, payout yoomodel.Payout, scheduler *scheduler.Scheduler) error {
+	const op = "service.payout.SchedulePayout"
+
+	// TODO get payout date
+
+	scheduler.Create("0 22 * * *", func() {
+		fmt.Println("New payout")
+	})
 	return nil
 }

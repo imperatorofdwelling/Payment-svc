@@ -20,7 +20,7 @@ func (s *Scheduler) Start() {
 	s.cron.Start()
 }
 
-func (s *Scheduler) Create(pattern string) {
+func (s *Scheduler) Create(pattern string, f cron.FuncJob) {
 	s.cron.AddFunc(pattern, func() {
 		fmt.Println("Scheduler works")
 	})
@@ -34,4 +34,6 @@ func (s *Scheduler) Stop() {
 	}
 }
 
-//"0 22 * * *" example cron
+func (s *Scheduler) formatCron() {
+	// TODO create formating cron func from time.Time to Cron's like
+}
